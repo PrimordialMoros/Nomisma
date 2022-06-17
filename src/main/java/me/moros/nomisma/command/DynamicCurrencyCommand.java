@@ -117,12 +117,14 @@ public final class DynamicCurrencyCommand {
   private void onBalanceTop(CommandSender commandSender, Integer page) {
     if (page > Leaderboard.MAX_PAGE) {
       Message.BALANCETOP_MAX_PAGE.send(commandSender, Leaderboard.MAX_PAGE);
+      return;
     }
     Nomisma.leaderboard().getTop(currency).thenAccept(result -> {
       int offset = (page - 1) * Leaderboard.ENTRIES_PER_PAGE;
       List<LeaderboardEntry> filteredEntries = result.stream().skip(offset).limit(Leaderboard.ENTRIES_PER_PAGE).toList();
       if (filteredEntries.isEmpty()) {
         Message.BALANCETOP_EMPTY.send(commandSender);
+        return;
       }
       Message.BALANCETOP_HEADER.send(commandSender, page);
       var it = filteredEntries.listIterator();

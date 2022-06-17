@@ -55,7 +55,7 @@ public non-sealed class ValidatedCurrency implements Currency {
     pluralPlain = CurrencyUtil.MINI_SERIALIZER.stripTags(meta.pluralRaw());
     plural = CurrencyUtil.MINI_SERIALIZER.deserialize(meta.pluralRaw());
     this.decimal = decimal;
-    this.primary = true;
+    this.primary = primary;
     commandPrefix = cmdMeta.commandPrefix();
     commandAliases = Set.copyOf(cmdMeta.commandAliases());
   }

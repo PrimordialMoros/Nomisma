@@ -74,7 +74,7 @@ tasks {
             relocate("io.leangen", "me.moros.nomisma.internal.leangen")
             relocate("org.spongepowered.configurate", "me.moros.nomisma.internal.configurate")
         }
-        minimize()
+        //minimize()
     }
     build {
         dependsOn(shadowJar)

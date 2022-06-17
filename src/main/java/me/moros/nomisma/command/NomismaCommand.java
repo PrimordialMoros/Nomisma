@@ -30,7 +30,6 @@ import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -97,7 +96,6 @@ public final class NomismaCommand {
       return;
     }
     Message.CURRENCIES_HEADER.send(user);
-    JoinConfiguration sep = JoinConfiguration.separator(Component.text(", ", NamedTextColor.GRAY));
-    user.sendMessage(Component.join(sep, currencies));
+    currencies.forEach(user::sendMessage);
   }
 }

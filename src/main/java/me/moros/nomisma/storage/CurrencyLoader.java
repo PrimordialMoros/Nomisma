@@ -50,7 +50,7 @@ public class CurrencyLoader {
 
   private CurrencyLoader(Path currencyDir) {
     this.currencyDir = currencyDir;
-    gson = new GsonBuilder().setPrettyPrinting().create();
+    gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     if (!currencyFileExists("example")) {
       saveCurrency("example", ValidatedCurrency.EXAMPLE);
     }
@@ -97,7 +97,7 @@ public class CurrencyLoader {
     return Tasker.async(() -> {
       Path path = Paths.get(currencyDir.toString(), name + CURRENCY_SUFFIX);
       try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path.toFile()), StandardCharsets.UTF_8)) {
-        gson.toJson(currency, writer);
+        gson.toJson(new CurrencyData(currency), writer);
         Nomisma.logger().info(currency.identifier() + " has been stored successfully.");
         return true;
       } catch (IOException ignore) {
