@@ -1,0 +1,20 @@
+name: Nomisma
+description: Multi-Currency plugin
+author: Moros
+version: ${pluginVersion}
+main: me.moros.nomisma.Nomisma
+softdepend: [Vault, PlaceholderAPI]
+api-version: 1.17
+permissions:
+  nomisma.admin:
+    description: Grants access to all commands.
+    default: op
+    children:
+      nomisma.player: true
+      nomisma.command.reload: true
+      nomisma.command.list: true
+  nomisma.player:
+    default: true
+    children:
+      nomisma.command.help: true
+      nomisma.command.version: true
