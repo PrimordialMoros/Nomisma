@@ -95,9 +95,6 @@ public final class StorageImpl implements EconomyStorage {
     source.close();
   }
 
-  /**
-   * Creates a new profile for the given uuid or returns an existing one if possible.
-   */
   @Override
   public @NonNull User createProfile(@NonNull UUID uuid, @NonNull String name) {
     User profile = loadProfile(uuid);
@@ -129,7 +126,7 @@ public final class StorageImpl implements EconomyStorage {
         handle.createQuery(SqlQueries.PLAYER_SELECT_BY_UUID.query())
           .bind(0, uuid).map(this::profileRowMapper).findOne().orElse(null)
       );
-      if (uuid.equals(temp.uuid())) {
+      if (temp != null && uuid.equals(temp.uuid())) {
         return temp;
       }
     } catch (Exception e) {
@@ -145,7 +142,7 @@ public final class StorageImpl implements EconomyStorage {
         handle.createQuery(SqlQueries.PLAYER_SELECT_BY_NAME.query())
           .bind(0, name).map(this::profileRowMapper).findOne().orElse(null)
       );
-      if (name.equalsIgnoreCase(temp.name())) {
+      if (temp != null && name.equalsIgnoreCase(temp.name())) {
         return temp;
       }
     } catch (Exception e) {

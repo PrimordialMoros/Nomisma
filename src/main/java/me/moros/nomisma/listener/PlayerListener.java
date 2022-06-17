@@ -63,12 +63,8 @@ public final class PlayerListener implements Listener {
       Player player = event.getPlayer();
       UUID uuid = player.getUniqueId();
       String name = player.getName();
-      User profile = Registries.USERS.userSync(uuid);
-      if (profile == null) {
-        Nomisma.logger().error("Could not create nomisma profile for: " + uuid + " (" + name + ")");
-      } else {
-        Registries.USERS.register(profile);
-      }
+      User profile = Registries.USERS.createIfNotExists(uuid, name);
+      Registries.USERS.register(profile);
     } catch (Exception e) {
       Nomisma.logger().warn(e.getMessage(), e);
     }

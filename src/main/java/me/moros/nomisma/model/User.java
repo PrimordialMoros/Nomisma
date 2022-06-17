@@ -62,14 +62,14 @@ public class User implements Identity, BalanceHolder {
   @Override
   public @NonNull BigDecimal balance(@NonNull Currency currency) {
     Objects.requireNonNull(currency);
-    return balance.getOrDefault(currency, BigDecimal.ZERO);
+    return balance.computeIfAbsent(currency, c -> BigDecimal.ZERO);
   }
 
   @Override
   public @NonNull BigDecimal set(@NonNull Currency currency, @NonNull BigDecimal amount) {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
-    balance.replace(currency, amount);
+    balance.put(currency, amount);
     Registries.USERS.addPending(this);
     return amount;
   }
@@ -78,10 +78,7 @@ public class User implements Identity, BalanceHolder {
   public @NonNull BigDecimal add(@NonNull Currency currency, @NonNull BigDecimal amount) {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
-    BigDecimal result = balance.computeIfPresent(currency, (c, bd) -> bd.add(amount));
-    if (result == null) {
-      return BigDecimal.ZERO;
-    }
+    BigDecimal result = balance.compute(currency, (c, bd) -> bd == null ? amount : bd.add(amount));
     Registries.USERS.addPending(this);
     return result;
   }
@@ -90,10 +87,7 @@ public class User implements Identity, BalanceHolder {
   public @NonNull BigDecimal subtract(@NonNull Currency currency, @NonNull BigDecimal amount) {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
-    BigDecimal bal = balance.get(currency);
-    if (bal == null) {
-      return BigDecimal.ZERO;
-    }
+    BigDecimal bal = balance.computeIfAbsent(currency, c -> BigDecimal.ZERO);
     if (bal.compareTo(amount) < 0) {
       return bal;
     }

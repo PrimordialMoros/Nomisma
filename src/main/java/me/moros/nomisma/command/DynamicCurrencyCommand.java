@@ -128,7 +128,7 @@ public final class DynamicCurrencyCommand {
       }
       Message.BALANCETOP_HEADER.send(commandSender, page);
       var it = filteredEntries.listIterator();
-      String pf = page >= 10 ? "> %3d " : "> %2d ";
+      String pf = page >= 10 ? "> %3d. " : "> %2d. ";
       while (it.hasNext()) {
         LeaderboardEntry entry = it.next();
         int position = offset + it.nextIndex();

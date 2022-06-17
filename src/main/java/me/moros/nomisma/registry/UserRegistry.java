@@ -79,6 +79,10 @@ public final class UserRegistry implements Registry<User> {
     copy.forEach(storage::saveProfile);
   }
 
+  public @NonNull User createIfNotExists(@NonNull UUID uuid, @NonNull String name) {
+    return cache.synchronous().get(uuid, id -> storage.createProfile(uuid, name));
+  }
+
   public @Nullable User userSync(@NonNull String name) {
     OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
     return player == null ? null : userSync(player.getUniqueId());
@@ -103,11 +107,9 @@ public final class UserRegistry implements Registry<User> {
 
   public void invalidate(@NonNull UUID uuid) {
     User user = onlineUsers.remove(uuid);
-    if (user != null) {
+    if (user != null && cache != null) {
       cache.synchronous().invalidate(uuid);
-      if (storage != null) {
-        storage.saveProfileAsync(user);
-      }
+      storage.saveProfileAsync(user);
     }
   }
 
