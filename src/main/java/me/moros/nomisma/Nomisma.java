@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import me.moros.nomisma.command.CommandManager;
 import me.moros.nomisma.config.ConfigManager;
+import me.moros.nomisma.hook.bossshop.BSPointsHook;
 import me.moros.nomisma.hook.placeholder.NomismaExpansion;
 import me.moros.nomisma.hook.vault.VaultLayer;
 import me.moros.nomisma.listener.PlayerListener;
@@ -77,8 +78,9 @@ public class Nomisma extends JavaPlugin {
       return;
     }
     loader.loadAllCurrencies();
-
     storage = Objects.requireNonNull(StorageFactory.createInstance(), "Unable to connect to database!");
+    Registries.CURRENCIES.forEach(storage::createColumn);
+
     Registries.USERS.init(storage);
     leaderboard = new Leaderboard(storage);
     handleHooks();
@@ -117,6 +119,9 @@ public class Nomisma extends JavaPlugin {
         vaultLayer = new VaultLayer(this, primary);
         Bukkit.getServicesManager().register(Economy.class, vaultLayer, this, ServicePriority.Low);
       }
+    }
+    if (getServer().getPluginManager().getPlugin("BossShopPro") != null) {
+      Registries.CURRENCIES.forEach(BSPointsHook::new);
     }
   }
 

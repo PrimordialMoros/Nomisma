@@ -19,6 +19,8 @@
 
 package me.moros.nomisma.storage;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 import me.moros.nomisma.model.Currency;
@@ -36,6 +38,8 @@ public interface EconomyStorage extends Storage {
   @Nullable User loadProfile(@NonNull String name);
 
   void saveProfileAsync(@NonNull User user);
+
+  boolean saveProfile(@NonNull User user, @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balance);
 
   @NonNull LeaderboardResult topBalances(@NonNull Currency currency, int offset, int limit);
 

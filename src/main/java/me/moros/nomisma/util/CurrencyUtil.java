@@ -59,6 +59,11 @@ public class CurrencyUtil {
   private CurrencyUtil() {
   }
 
+  public static double doubleValue(@NonNull BigDecimal value) {
+    double amount = value.doubleValue();
+    return BigDecimal.valueOf(amount).compareTo(value) > 0 ? Math.nextAfter(amount, Double.NEGATIVE_INFINITY) : amount;
+  }
+
   public static @Nullable String sanitizeInput(@NonNull String input) {
     String output = ILLEGAL_IDENTIFIER.matcher(input).replaceAll("").toLowerCase(Locale.ROOT);
     if (output.isEmpty()) {

@@ -71,9 +71,9 @@ public enum Tasker {
     return null;
   }
 
-  public static @Nullable BukkitTask repeat(@NonNull Runnable runnable, long interval) {
+  public static @Nullable BukkitTask repeatAsync(@NonNull Runnable runnable, long interval) {
     if (Nomisma.plugin().isEnabled()) {
-      return Bukkit.getScheduler().runTaskTimer(Nomisma.plugin(), runnable, 1, interval);
+      return Bukkit.getScheduler().runTaskTimerAsynchronously(Nomisma.plugin(), runnable, 1, interval);
     }
     return null;
   }

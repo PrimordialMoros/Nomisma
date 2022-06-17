@@ -34,6 +34,8 @@ import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 import org.bukkit.OfflinePlayer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import static me.moros.nomisma.util.CurrencyUtil.doubleValue;
+
 public class VaultLayer implements Economy {
   private final Nomisma plugin;
   private final Currency primary;
@@ -98,11 +100,6 @@ public class VaultLayer implements Economy {
   @Override
   public boolean hasAccount(OfflinePlayer player, String worldName) {
     return hasAccount(player);
-  }
-
-  private double doubleValue(BigDecimal value) {
-    double amount = value.doubleValue();
-    return BigDecimal.valueOf(amount).compareTo(value) > 0 ? Math.nextAfter(amount, Double.NEGATIVE_INFINITY) : amount;
   }
 
   @Deprecated

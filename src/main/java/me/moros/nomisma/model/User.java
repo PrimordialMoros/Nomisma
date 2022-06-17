@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import me.moros.nomisma.registry.Registries;
 import net.kyori.adventure.identity.Identity;
 import org.bukkit.OfflinePlayer;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -69,6 +70,7 @@ public class User implements Identity, BalanceHolder {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
     balance.replace(currency, amount);
+    Registries.USERS.addPending(this);
     return amount;
   }
 
@@ -77,7 +79,11 @@ public class User implements Identity, BalanceHolder {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
     BigDecimal result = balance.computeIfPresent(currency, (c, bd) -> bd.add(amount));
-    return result == null ? BigDecimal.ZERO : result;
+    if (result == null) {
+      return BigDecimal.ZERO;
+    }
+    Registries.USERS.addPending(this);
+    return result;
   }
 
   @Override
@@ -93,6 +99,7 @@ public class User implements Identity, BalanceHolder {
     }
     BigDecimal result = bal.subtract(amount);
     balance.put(currency, result);
+    Registries.USERS.addPending(this);
     return result;
   }
 

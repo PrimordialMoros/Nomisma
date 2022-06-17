@@ -160,7 +160,8 @@ public final class StorageImpl implements EconomyStorage {
     Tasker.async(() -> saveProfile(user, snapshot));
   }
 
-  private boolean saveProfile(User user, Map<Currency, BigDecimal> balance) {
+  @Override
+  public boolean saveProfile(@NonNull User user, @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balance) {
     try {
       var map = balance.entrySet().stream()
         .collect(Collectors.toMap(e -> e.getKey().identifier(), Entry::getValue));

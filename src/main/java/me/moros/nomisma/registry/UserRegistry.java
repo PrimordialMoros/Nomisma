@@ -19,8 +19,10 @@
 
 package me.moros.nomisma.registry;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -31,8 +33,11 @@ import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import me.moros.nomisma.Nomisma;
+import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.storage.EconomyStorage;
+import me.moros.nomisma.util.Tasker;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -43,19 +48,35 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * Registry for all valid users.
  */
 public final class UserRegistry implements Registry<User> {
-  private AsyncLoadingCache<UUID, User> cache;
   private final Map<UUID, User> onlineUsers;
+  private final Map<User, Map<Currency, BigDecimal>> pending;
+
+  private EconomyStorage storage;
+  private AsyncLoadingCache<UUID, User> cache;
 
   UserRegistry() {
     onlineUsers = new ConcurrentHashMap<>();
+    pending = new ConcurrentHashMap<>();
   }
 
   public void init(@NonNull EconomyStorage storage) {
     if (cache == null) {
       Objects.requireNonNull(storage);
+      this.storage = storage;
       cache = Caffeine.newBuilder().maximumSize(100).expireAfterAccess(Duration.ofMinutes(20))
-        .buildAsync(storage::loadProfile);
+        .buildAsync(this.storage::loadProfile);
+      long minutes = Nomisma.configManager().config().node("save-interval-minutes").getLong(10);
+      Tasker.repeatAsync(this::processTasks, 1200 * Math.max(1, minutes));
     }
+  }
+
+  private void processTasks() {
+    if (pending.isEmpty()) {
+      return;
+    }
+    var copy = new HashMap<>(pending);
+    pending.clear();
+    copy.forEach(storage::saveProfile);
   }
 
   public @Nullable User userSync(@NonNull String name) {
@@ -81,7 +102,13 @@ public final class UserRegistry implements Registry<User> {
   }
 
   public void invalidate(@NonNull UUID uuid) {
-    onlineUsers.remove(uuid);
+    User user = onlineUsers.remove(uuid);
+    if (user != null) {
+      cache.synchronous().invalidate(uuid);
+      if (storage != null) {
+        storage.saveProfileAsync(user);
+      }
+    }
   }
 
   public void register(@NonNull User user) {
@@ -95,5 +122,9 @@ public final class UserRegistry implements Registry<User> {
   @Override
   public @NonNull Iterator<User> iterator() {
     return Collections.unmodifiableCollection(onlineUsers.values()).iterator();
+  }
+
+  public void addPending(@NonNull User user) {
+    pending.put(user, user.balanceSnapshot());
   }
 }
