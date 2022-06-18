@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.storage.EconomyStorage;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -37,7 +38,8 @@ public class Leaderboard {
   private final AsyncLoadingCache<Currency, LeaderboardResult> cache;
 
   public Leaderboard(@NonNull EconomyStorage storage) {
-    cache = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(5)).buildAsync(c -> storage.topBalances(c, 0, 100));
+    long time = Nomisma.configManager().config().node("leaderboard-cache-minutes").getLong(5);
+    cache = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(time)).buildAsync(c -> storage.topBalances(c, 0, 100));
   }
 
   public @NonNull CompletableFuture<@NonNull LeaderboardResult> getTop(@NonNull Currency currency) {

@@ -75,7 +75,6 @@ public final class NomismaCommand {
   public static void onReload(CommandSender sender) {
     Nomisma.translationManager().reload();
     Nomisma.configManager().reload();
-    Nomisma.currencyLoader().loadAllCurrencies();
     Message.RELOAD.send(sender);
   }
 
