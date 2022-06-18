@@ -55,7 +55,7 @@ public enum SqlQueries {
   public static @NonNull String updateProfile(@NonNull Collection<@NonNull String> currencies) {
     StringBuilder sb = new StringBuilder("UPDATE nomisma_players SET player_name = :player_name");
     for (String id : currencies) {
-      sb.append(" ").append(id).append(" = :").append(id);
+      sb.append(", ").append(id).append(" = :").append(id);
     }
     sb.append(" WHERE player_uuid = :player_uuid");
     return sb.toString();

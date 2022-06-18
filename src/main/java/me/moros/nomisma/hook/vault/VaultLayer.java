@@ -67,7 +67,7 @@ public class VaultLayer implements Economy {
 
   @Override
   public String format(double amount) {
-    return CurrencyUtil.SYMBOL + CurrencyUtil.format(BigDecimal.valueOf(amount));
+    return CurrencyUtil.formatPlain(primary, BigDecimal.valueOf(amount));
   }
 
   @Override

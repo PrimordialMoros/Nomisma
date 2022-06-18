@@ -26,6 +26,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class CurrencyData {
   private final String id;
+  private final String formatRaw;
   private final String singularRaw;
   private final String pluralRaw;
   private final boolean decimal;
@@ -35,8 +36,9 @@ public final class CurrencyData {
 
   public CurrencyData(@NonNull Currency currency) {
     id = currency.identifier();
-    singularRaw = CurrencyUtil.MINI_SERIALIZER.serializeOr(currency.singular(), currency.singularPlain());
-    pluralRaw = CurrencyUtil.MINI_SERIALIZER.serializeOr(currency.plural(), currency.pluralPlain());
+    formatRaw = currency.format();
+    singularRaw = CurrencyUtil.MINI_SERIALIZER.serialize(currency.singular());
+    pluralRaw = CurrencyUtil.MINI_SERIALIZER.serialize(currency.plural());
     decimal = currency.decimal();
     primary = currency.primary();
     cmdPrefix = currency.commandPrefix();
@@ -45,6 +47,10 @@ public final class CurrencyData {
 
   public @NonNull String id() {
     return id;
+  }
+
+  public @NonNull String formatRaw() {
+    return formatRaw;
   }
 
   public @NonNull String singularRaw() {

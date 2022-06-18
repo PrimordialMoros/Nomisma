@@ -27,6 +27,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public sealed interface Currency permits ValidatedCurrency {
   @NonNull String identifier();
 
+  @NonNull String format();
+
   @NonNull String singularPlain();
 
   @NonNull Component singular();

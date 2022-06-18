@@ -31,6 +31,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -39,8 +42,6 @@ public class CurrencyUtil {
   private static final Pattern ILLEGAL_IDENTIFIER = Pattern.compile("[^_A-Za-z0-9]");
   private static final Pattern NON_ALPHABETICAL = Pattern.compile("[^A-Za-z]");
 
-  public static final String SYMBOL = "$";
-
   public static final MiniMessage MINI_SERIALIZER = MiniMessage.miniMessage();
 
   static {
@@ -48,11 +49,11 @@ public class CurrencyUtil {
     symbols.setGroupingSeparator(',');
     symbols.setDecimalSeparator('.');
 
-    FORMAT = new DecimalFormat("#0.00", symbols);
+    FORMAT = new DecimalFormat("#0.##", symbols);
     FORMAT.setRoundingMode(RoundingMode.FLOOR);
     FORMAT.setParseBigDecimal(true);
     FORMAT.setGroupingUsed(true);
-    FORMAT.setMinimumFractionDigits(2);
+    FORMAT.setMinimumFractionDigits(0);
     FORMAT.setMaximumFractionDigits(2);
   }
 
@@ -79,23 +80,23 @@ public class CurrencyUtil {
 
   public static @Nullable BigDecimal parse(@NonNull String input) {
     try {
-      return (BigDecimal) FORMAT.parse(input);
-    } catch (final Exception e) {
+      BigDecimal value = (BigDecimal) FORMAT.parse(input);
+      return value.stripTrailingZeros();
+    } catch (Exception e) {
       return null;
     }
   }
 
-  public static String format(@NonNull BigDecimal value) {
-    String str = FORMAT.format(value);
-    if (str.endsWith(".00")) {
-      str = str.substring(0, str.length() - 3);
-    }
-    return str;
+  public static @NonNull Component format(@NonNull Currency currency, @NonNull BigDecimal value) {
+    Component form = value.compareTo(BigDecimal.ONE) > 0 ? currency.plural() : currency.singular();
+    TagResolver resolver = TagResolver.builder()
+      .resolver(Placeholder.component("currency", form))
+      .resolver(Placeholder.unparsed("amount", FORMAT.format(value))).build();
+    return MINI_SERIALIZER.deserialize(currency.format(), resolver);
   }
 
-  public static @NonNull Component format(@NonNull Currency currency, @NonNull BigDecimal value) {
-    Component symbol = value.compareTo(BigDecimal.ONE) > 0 ? currency.plural() : currency.singular();
-    return symbol.append(Component.text(FORMAT.format(value), symbol.color()));
+  public static @NonNull String formatPlain(@NonNull Currency currency, @NonNull BigDecimal value) {
+    return PlainTextComponentSerializer.plainText().serialize(format(currency, value));
   }
 
   public static @NonNull Component createInfo(@NonNull Currency c) {
@@ -103,9 +104,9 @@ public class CurrencyUtil {
       .append(Component.text("Id: ", NamedTextColor.DARK_AQUA))
       .append(Component.text(c.identifier(), NamedTextColor.GREEN)).append(Component.newline())
       .append(Component.text("Singular: ", NamedTextColor.DARK_AQUA))
-      .append(c.singular()).append(Component.newline())
+      .append(format(c, BigDecimal.ONE)).append(Component.newline())
       .append(Component.text("Plural: ", NamedTextColor.DARK_AQUA))
-      .append(c.plural()).append(Component.newline())
+      .append(format(c, BigDecimal.valueOf(c.decimal() ? 6.66 : 666))).append(Component.newline())
       .append(Component.text("Primary: ", NamedTextColor.DARK_AQUA))
       .append(Component.text(c.primary(), c.primary() ? NamedTextColor.GREEN : NamedTextColor.RED)).append(Component.newline())
       .append(Component.text("Decimal: ", NamedTextColor.DARK_AQUA))

@@ -113,6 +113,11 @@ public final class UserRegistry implements Registry<User> {
     }
   }
 
+  public void saveAll() {
+    onlineUsers.values().forEach(u -> pending.put(u, u.balanceSnapshot()));
+    processTasks();
+  }
+
   public void register(@NonNull User user) {
     onlineUsers.putIfAbsent(user.uuid(), user);
   }

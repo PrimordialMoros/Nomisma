@@ -89,7 +89,7 @@ public class User implements Identity, BalanceHolder {
     Objects.requireNonNull(amount);
     BigDecimal bal = balance.computeIfAbsent(currency, c -> BigDecimal.ZERO);
     if (bal.compareTo(amount) < 0) {
-      return bal;
+      return set(currency, BigDecimal.ZERO);
     }
     BigDecimal result = bal.subtract(amount);
     balance.put(currency, result);

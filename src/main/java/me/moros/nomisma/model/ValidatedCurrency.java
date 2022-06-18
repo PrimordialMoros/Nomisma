@@ -31,25 +31,27 @@ public non-sealed class ValidatedCurrency implements Currency {
   public static final ValidatedCurrency EXAMPLE;
 
   static {
-    StringMeta meta = new StringMeta("money", "<dark_green>$</dark_green>");
+    StringMeta meta = new StringMeta("money", "<dark_green>$<amount></dark_green>", "<dark_green>$</dark_green>");
     EXAMPLE = new ValidatedCurrency(meta, true, true, new CmdMeta());
   }
 
   private final String identifier;
 
-  private final boolean decimal;
-  private final boolean primary;
-
+  private final String format;
   private final String singularPlain;
   private final Component singular;
   private final String pluralPlain;
   private final Component plural;
+
+  private final boolean decimal;
+  private final boolean primary;
 
   private final String commandPrefix;
   private final Collection<String> commandAliases;
 
   private ValidatedCurrency(StringMeta meta, boolean decimal, boolean primary, CmdMeta cmdMeta) {
     identifier = meta.identifier();
+    format = meta.formatRaw();
     singularPlain = CurrencyUtil.MINI_SERIALIZER.stripTags(meta.singularRaw());
     singular = CurrencyUtil.MINI_SERIALIZER.deserialize(meta.singularRaw());
     pluralPlain = CurrencyUtil.MINI_SERIALIZER.stripTags(meta.pluralRaw());
@@ -63,6 +65,11 @@ public non-sealed class ValidatedCurrency implements Currency {
   @Override
   public @NonNull String identifier() {
     return identifier;
+  }
+
+  @Override
+  public @NonNull String format() {
+    return format;
   }
 
   @Override
@@ -116,14 +123,14 @@ public non-sealed class ValidatedCurrency implements Currency {
     String cmdPrefix = CurrencyUtil.sanitizeCmdString(currency.cmdPrefix());
     Collection<String> aliases = currency.cmdAliases().stream()
       .map(CurrencyUtil::sanitizeCmdString).filter(s -> !s.isEmpty()).toList();
-    StringMeta meta = new StringMeta(id, currency.singularRaw(), currency.pluralRaw());
+    StringMeta meta = new StringMeta(id, currency.formatRaw(), currency.singularRaw(), currency.pluralRaw());
     CmdMeta cmdMeta = new CmdMeta(cmdPrefix, aliases);
     return new ValidatedCurrency(meta, currency.decimal(), currency.primary(), cmdMeta);
   }
 
-  private record StringMeta(String identifier, String singularRaw, String pluralRaw) {
-    private StringMeta(String identifier, String raw) {
-      this(identifier, raw, raw);
+  private record StringMeta(String identifier, String formatRaw, String singularRaw, String pluralRaw) {
+    private StringMeta(String identifier, String formatRaw, String raw) {
+      this(identifier, formatRaw, raw, raw);
     }
   }
 

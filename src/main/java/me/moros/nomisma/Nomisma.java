@@ -101,7 +101,7 @@ public class Nomisma extends JavaPlugin {
     if (vaultLayer != null) {
       Bukkit.getServicesManager().unregister(Economy.class, vaultLayer);
     }
-    Registries.USERS.forEach(storage::saveProfileAsync);
+    Registries.USERS.saveAll();
     Tasker.INSTANCE.shutdown();
     storage.close();
     getServer().getScheduler().cancelTasks(this);

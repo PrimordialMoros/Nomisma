@@ -40,7 +40,7 @@ public final class PlaceholderProvider {
     Builder builder = new Builder();
     builder.addDynamic("balance", (player, cur) -> {
       Currency currency = Registries.CURRENCIES.currency(cur);
-      return currency == null ? "" : CurrencyUtil.format(player.balance(currency));
+      return currency == null ? "" : CurrencyUtil.formatPlain(currency, player.balance(currency));
     });
     return builder.build();
   }

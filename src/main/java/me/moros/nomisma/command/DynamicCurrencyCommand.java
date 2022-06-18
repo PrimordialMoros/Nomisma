@@ -27,6 +27,7 @@ import cloud.commandframework.arguments.standard.EnumArgument;
 import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.meta.CommandMeta;
 import me.moros.nomisma.Nomisma;
+import me.moros.nomisma.command.argument.BigDecimalArgument;
 import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.model.BalanceHolder;
 import me.moros.nomisma.model.Currency;
@@ -36,7 +37,6 @@ import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -63,20 +63,20 @@ public final class DynamicCurrencyCommand {
       .meta(CommandMeta.DESCRIPTION, "Transfer the specified amount to another player")
       .permission(currency.permission() + ".pay")
       .argument(userArg.asRequired().build())
-      .argument(manager.argumentBuilder(BigDecimal.class, "amount"))
+      .argument(BigDecimalArgument.of("amount", currency.decimal()))
       .senderType(Player.class)
       .handler(c -> onPay(c.getSender(), c.get("target"), c.get("amount")))
     ).command(builder("balancemodify", "balmod")
       .meta(CommandMeta.DESCRIPTION, "Modify the specified player's balance")
       .permission(currency.permission() + ".modify")
       .argument(EnumArgument.of(ModifierOperation.class, "operation"))
-      .argument(userArg.build())
-      .argument(manager.argumentBuilder(BigDecimal.class, "amount"))
+      .argument(userArg.asRequired().build())
+      .argument(BigDecimalArgument.of("amount", currency.decimal()))
       .handler(c -> onModify(c.getSender(), c.get("operation"), c.get("target"), c.get("amount")))
     ).command(builder("balance", "bal")
       .meta(CommandMeta.DESCRIPTION, "View the specified player's balance")
       .permission(currency.permission() + ".balance")
-      .argument(userArg.build())
+      .argument(userArg.asOptional().build())
       .handler(c -> onBalance(c.getSender(), c.get("target")))
     ).command(builder("balancetop", "baltop", "lead")
       .meta(CommandMeta.DESCRIPTION, "View a page of the balance leaderboard")
@@ -91,8 +91,9 @@ public final class DynamicCurrencyCommand {
     if (!sender.uuid().equals(target.uuid())) {
       if (!sender.has(currency, amount)) {
         Message.INSUFFICIENT_FUNDS.send(commandSender, currency.plural());
+        return;
       }
-      Component value = Component.text(CurrencyUtil.format(amount), NamedTextColor.GOLD);
+      Component value = CurrencyUtil.format(currency, amount);
       BigDecimal newBalanceSender = sender.subtract(currency, amount);
       BigDecimal newBalanceReceiver = target.add(currency, amount);
       Message.PAID_SENDER.send(commandSender, value, target.name());

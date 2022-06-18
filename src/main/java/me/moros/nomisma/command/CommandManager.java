@@ -19,7 +19,6 @@
 
 package me.moros.nomisma.command;
 
-import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -32,14 +31,17 @@ import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
 import cloud.commandframework.paper.PaperCommandManager;
 import io.leangen.geantyref.TypeToken;
 import me.moros.nomisma.Nomisma;
-import me.moros.nomisma.command.parser.BigDecimalParser;
 import me.moros.nomisma.command.parser.UserParser;
 import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
+import me.moros.nomisma.util.CurrencyUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
+
+import static net.kyori.adventure.text.Component.text;
 
 public final class CommandManager extends PaperCommandManager<CommandSender> {
   public CommandManager(@NonNull Nomisma plugin) throws Exception {
@@ -55,18 +57,20 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
   }
 
   private void registerParsers() {
-    getParserRegistry().registerParserSupplier(TypeToken.get(BigDecimal.class), options -> new BigDecimalParser());
     getParserRegistry().registerParserSupplier(TypeToken.get(User.class), options -> new UserParser());
   }
 
   private void registerExceptionHandler() {
+    String prefix = Nomisma.configManager().config().node("brand")
+      .getString(CurrencyUtil.MINI_SERIALIZER.serialize(Message.PREFIX));
+    Component prefixComponent = CurrencyUtil.MINI_SERIALIZER.deserializeOr(prefix, Message.PREFIX);
     new MinecraftExceptionHandler<CommandSender>()
       .withInvalidSyntaxHandler()
       .withInvalidSenderHandler()
       .withNoPermissionHandler()
       .withArgumentParsingHandler()
       .withCommandExecutionHandler()
-      .withDecorator(Message::brand)
+      .withDecorator(c -> text().append(prefixComponent).append(c).build())
       .apply(this, AudienceProvider.nativeAudience());
   }
 
