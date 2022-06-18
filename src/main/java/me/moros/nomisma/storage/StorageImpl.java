@@ -190,11 +190,9 @@ public final class StorageImpl implements EconomyStorage {
   @Override
   public boolean createColumn(@NonNull Currency currency) {
     try {
-      boolean exists = DB.withHandle(handle -> {
-        String catalog = handle.getConnection().getCatalog();
-        return handle.queryMetadata(d -> d.getColumns(catalog, null, "nomisma_players", null))
-          .map(x -> x.getColumn("COLUMN_NAME", String.class)).stream().anyMatch(currency.identifier()::equalsIgnoreCase);
-      });
+      boolean exists = DB.withHandle(handle -> handle.queryMetadata(d -> d.getColumns(null, null, "%", null))
+          .map(x -> x.getColumn("COLUMN_NAME", String.class)).stream().anyMatch(currency.identifier()::equalsIgnoreCase)
+      );
       if (!exists) {
         DB.withHandle(handle -> handle.createUpdate(SqlQueries.addColumn(currency)).execute());
         return true;
