@@ -22,7 +22,6 @@ package me.moros.nomisma.listener;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import co.aikar.timings.Timing;
@@ -42,12 +41,12 @@ public final class PlayerListener implements Listener {
   @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
   public void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
     UUID uuid = event.getUniqueId();
+    String name = event.getName();
     long startTime = System.currentTimeMillis();
     try {
-      // Timeout after 1000ms to not block the login thread excessively
-      User profile = Registries.USERS.user(uuid).get(1000, TimeUnit.MILLISECONDS);
+      Registries.USERS.forceLoad(uuid, name, 1000); // Timeout after 1000ms to not block the login thread excessively
       long deltaTime = System.currentTimeMillis() - startTime;
-      if (profile != null && deltaTime > 500) {
+      if (deltaTime > 500) {
         Nomisma.logger().warn("Processing login for " + uuid + " took " + deltaTime + "ms.");
       }
     } catch (TimeoutException e) {
@@ -63,7 +62,7 @@ public final class PlayerListener implements Listener {
       Player player = event.getPlayer();
       UUID uuid = player.getUniqueId();
       String name = player.getName();
-      User profile = Registries.USERS.createIfNotExists(uuid, name);
+      User profile = Registries.USERS.forceLoad(uuid, name);
       Registries.USERS.register(profile);
     } catch (Exception e) {
       Nomisma.logger().warn(e.getMessage(), e);

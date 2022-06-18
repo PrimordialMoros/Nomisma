@@ -29,6 +29,9 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
@@ -79,13 +82,20 @@ public final class UserRegistry implements Registry<User> {
     copy.forEach(storage::saveProfile);
   }
 
-  public @NonNull User createIfNotExists(@NonNull UUID uuid, @NonNull String name) {
-    return cache.synchronous().get(uuid, id -> storage.createProfile(uuid, name));
-  }
-
   public @Nullable User userSync(@NonNull String name) {
     OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
-    return player == null ? null : userSync(player.getUniqueId());
+    if (player != null) {
+      return userSync(player.getUniqueId());
+    } else {
+      if (cache != null) {
+        User user = storage.loadProfile(name);
+        if (user != null) {
+          cache.synchronous().put(user.uuid(), user);
+          return user;
+        }
+      }
+    }
+    return null;
   }
 
   public @Nullable User userSync(@NonNull UUID uuid) {
@@ -94,11 +104,36 @@ public final class UserRegistry implements Registry<User> {
 
   public @NonNull CompletableFuture<@Nullable User> user(@NonNull String name) {
     OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
-    return player == null ? CompletableFuture.completedFuture(null) : user(player.getUniqueId());
+    if (player != null) {
+      return user(player.getUniqueId());
+    } else {
+      if (cache != null) {
+        return Tasker.async(() -> storage.loadProfile(name)).thenApply(user -> {
+          if (user != null) {
+            cache.synchronous().put(user.uuid(), user);
+            return user;
+          }
+          return null;
+        });
+      }
+    }
+    return CompletableFuture.completedFuture(null);
   }
 
   public @NonNull CompletableFuture<@Nullable User> user(@NonNull UUID uuid) {
     return cache == null ? CompletableFuture.completedFuture(null) : cache.get(uuid);
+  }
+
+  public @NonNull User forceLoad(@NonNull UUID uuid, @NonNull String name) {
+    onlineUsers.remove(uuid);
+    cache.synchronous().invalidate(uuid);
+    return cache.synchronous().get(uuid, id -> storage.createProfile(uuid, name));
+  }
+
+  public @NonNull User forceLoad(@NonNull UUID uuid, @NonNull String name, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
+    onlineUsers.remove(uuid);
+    cache.synchronous().invalidate(uuid);
+    return cache.get(uuid, id -> storage.createProfile(uuid, name)).get(timeout, TimeUnit.MILLISECONDS);
   }
 
   public @NonNull User onlineUser(@NonNull Player player) {

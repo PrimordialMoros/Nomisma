@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
 import cloud.commandframework.execution.preprocessor.CommandPreprocessingContext;
@@ -40,12 +41,17 @@ import me.moros.nomisma.util.CurrencyUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import static net.kyori.adventure.text.Component.text;
 
 public final class CommandManager extends PaperCommandManager<CommandSender> {
+  private static Pattern INVALID_NAMES;
+
   public CommandManager(@NonNull Nomisma plugin) throws Exception {
     super(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>newBuilder().withSynchronousParsing().build(), Function.identity(), Function.identity());
+    String prefix = Nomisma.configManager().config().node("geyser-username-prefix").getString(".");
+    INVALID_NAMES = Pattern.compile("[^" + prefix + "_A-Za-z0-9]");
     registerParsers();
     registerExceptionHandler();
     registerAsynchronousCompletions();
@@ -54,6 +60,17 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
     for (Currency currency : Registries.CURRENCIES) {
       new DynamicCurrencyCommand(this, currency);
     }
+  }
+
+  public static @Nullable String sanitizeName(@Nullable String input) {
+    if (input == null || INVALID_NAMES == null) {
+      return null;
+    }
+    String output = INVALID_NAMES.matcher(input).replaceAll("");
+    if (output.isEmpty()) {
+      return null;
+    }
+    return output.length() > 17 ? output.substring(0, 17) : output;
   }
 
   private void registerParsers() {

@@ -28,10 +28,10 @@ import cloud.commandframework.arguments.parser.ArgumentParser;
 import cloud.commandframework.bukkit.parsers.PlayerArgument.PlayerParseException;
 import cloud.commandframework.context.CommandContext;
 import cloud.commandframework.exceptions.parsing.NoInputProvidedException;
+import me.moros.nomisma.command.CommandManager;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -39,7 +39,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public final class UserParser implements ArgumentParser<CommandSender, User> {
   @Override
   public @NonNull ArgumentParseResult<User> parse(@NonNull CommandContext<CommandSender> commandContext, @NonNull Queue<@NonNull String> inputQueue) {
-    String input = inputQueue.peek();
+    String input = CommandManager.sanitizeName(inputQueue.peek());
     if (input == null) {
       return ArgumentParseResult.failure(new NoInputProvidedException(UserParser.class, commandContext));
     }
@@ -51,12 +51,9 @@ public final class UserParser implements ArgumentParser<CommandSender, User> {
     if (player != null) {
       return ArgumentParseResult.success(Registries.USERS.onlineUser(player));
     }
-    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayerIfCached(input);
-    if (offlinePlayer != null) {
-      User user = Registries.USERS.userSync(offlinePlayer.getUniqueId());
-      if (user != null) {
-        return ArgumentParseResult.success(user);
-      }
+    User user = Registries.USERS.userSync(input);
+    if (user != null) {
+      return ArgumentParseResult.success(user);
     }
     return ArgumentParseResult.failure(new PlayerParseException(input, commandContext));
   }
