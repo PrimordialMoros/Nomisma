@@ -29,6 +29,7 @@ import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
 import cloud.commandframework.execution.preprocessor.CommandPreprocessingContext;
 import cloud.commandframework.minecraft.extras.AudienceProvider;
 import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
+import cloud.commandframework.minecraft.extras.MinecraftHelp;
 import cloud.commandframework.paper.PaperCommandManager;
 import io.leangen.geantyref.TypeToken;
 import me.moros.nomisma.Nomisma;
@@ -48,6 +49,8 @@ import static net.kyori.adventure.text.Component.text;
 public final class CommandManager extends PaperCommandManager<CommandSender> {
   private static Pattern INVALID_NAMES;
 
+  private final MinecraftHelp<CommandSender> help;
+
   public CommandManager(@NonNull Nomisma plugin) throws Exception {
     super(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>newBuilder().withSynchronousParsing().build(), Function.identity(), Function.identity());
     String prefix = Nomisma.configManager().config().node("geyser-username-prefix").getString(".");
@@ -56,10 +59,18 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
     registerExceptionHandler();
     registerAsynchronousCompletions();
     setCommandSuggestionProcessor(this::suggestionProvider);
+
+    help = MinecraftHelp.createNative("/nomisma help", this);
+    help.setMaxResultsPerPage(8);
+
     new NomismaCommand(this);
     for (Currency currency : Registries.CURRENCIES) {
       new DynamicCurrencyCommand(this, currency);
     }
+  }
+
+  public @NonNull MinecraftHelp<CommandSender> help() {
+    return help;
   }
 
   public static @Nullable String sanitizeName(@Nullable String input) {

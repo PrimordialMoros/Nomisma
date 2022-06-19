@@ -24,7 +24,6 @@ import java.util.Collection;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.arguments.standard.StringArgument.StringMode;
 import cloud.commandframework.meta.CommandMeta;
-import cloud.commandframework.minecraft.extras.MinecraftHelp;
 import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.registry.Registries;
@@ -38,12 +37,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class NomismaCommand {
   private final CommandManager manager;
-  private final MinecraftHelp<CommandSender> help;
 
   NomismaCommand(@NonNull CommandManager manager) {
     this.manager = manager;
-    this.help = MinecraftHelp.createNative("/nomisma help", manager);
-    this.help.setMaxResultsPerPage(8);
     construct();
   }
 
@@ -51,7 +47,7 @@ public final class NomismaCommand {
     var builder = manager.commandBuilder("nomisma")
       .meta(CommandMeta.DESCRIPTION, "Base command for Nomisma");
     //noinspection ConstantConditions
-    manager.command(builder.handler(c -> help.queryCommands("", c.getSender())))
+    manager.command(builder.handler(c -> manager.help().queryCommands("", c.getSender())))
       .command(builder.literal("reload")
         .meta(CommandMeta.DESCRIPTION, "Reload the plugin")
         .permission(CommandPermissions.RELOAD)
@@ -68,7 +64,7 @@ public final class NomismaCommand {
         .meta(CommandMeta.DESCRIPTION, "View info about a command")
         .permission(CommandPermissions.HELP)
         .argument(StringArgument.optional("query", StringMode.GREEDY))
-        .handler(c -> help.queryCommands(c.getOrDefault("query", ""), c.getSender()))
+        .handler(c -> manager.help().queryCommands(c.getOrDefault("query", ""), c.getSender()))
       );
   }
 

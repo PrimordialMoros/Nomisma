@@ -32,7 +32,7 @@ public non-sealed class ValidatedCurrency implements Currency {
 
   static {
     StringMeta meta = new StringMeta("money", "<dark_green>$<amount></dark_green>", "<dark_green>$</dark_green>");
-    EXAMPLE = new ValidatedCurrency(meta, true, true, new CmdMeta());
+    EXAMPLE = new ValidatedCurrency(meta, true, true, new CmdMeta("money"));
   }
 
   private final String identifier;
@@ -135,8 +135,8 @@ public non-sealed class ValidatedCurrency implements Currency {
   }
 
   private record CmdMeta(String commandPrefix, Collection<String> commandAliases) {
-    private CmdMeta() {
-      this("", Set.of());
+    private CmdMeta(String commandPrefix) {
+      this(commandPrefix, Set.of());
     }
   }
 }

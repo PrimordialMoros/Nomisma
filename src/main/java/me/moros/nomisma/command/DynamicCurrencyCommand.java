@@ -25,6 +25,8 @@ import java.util.List;
 import cloud.commandframework.Command.Builder;
 import cloud.commandframework.arguments.standard.EnumArgument;
 import cloud.commandframework.arguments.standard.IntegerArgument;
+import cloud.commandframework.arguments.standard.StringArgument;
+import cloud.commandframework.arguments.standard.StringArgument.StringMode;
 import cloud.commandframework.meta.CommandMeta;
 import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.command.argument.BigDecimalArgument;
@@ -84,6 +86,14 @@ public final class DynamicCurrencyCommand {
       .argument(pageArg.build())
       .handler(c -> onBalanceTop(c.getSender(), c.get("page")))
     );
+    if (!currency.primary()) {
+      manager.command(builder("help", "h")
+        .meta(CommandMeta.DESCRIPTION, "View info about a command")
+        .permission(CommandPermissions.HELP)
+        .argument(StringArgument.optional("query", StringMode.GREEDY))
+        .handler(c -> onHelp(c.getSender(), c.getOrDefault("query", "")))
+      );
+    }
   }
 
   private void onPay(CommandSender commandSender, User target, BigDecimal amount) {
@@ -139,6 +149,14 @@ public final class DynamicCurrencyCommand {
         commandSender.sendMessage(text);
       }
     });
+  }
+
+  private void onHelp(CommandSender sender, String query) {
+    String specificQuery = currency.commandPrefix();
+    if (query != null && !query.isEmpty()) {
+      specificQuery += " " + query;
+    }
+    manager.help().queryCommands(specificQuery, sender);
   }
 
   private Builder<CommandSender> builder(String cmd, String... aliases) {
