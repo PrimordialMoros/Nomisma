@@ -32,22 +32,29 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class CurrencyRegistry implements Registry<Currency> {
   private final Map<String, Currency> currencies;
+  private Currency primary;
+  private boolean locked = false;
 
   CurrencyRegistry() {
     currencies = new ConcurrentHashMap<>();
   }
 
-  public int register(@NonNull Iterable<@NonNull Currency> currencies) {
+  public int registerAndLock(@NonNull Iterable<@NonNull Currency> currencies) {
+    if (locked) {
+      return 0;
+    }
     int counter = 0;
     for (Currency currency : currencies) {
       if (register(currency)) {
         counter++;
       }
     }
+    locked = true;
+    primary = stream().filter(Currency::primary).findFirst().orElse(null);
     return counter;
   }
 
-  public boolean register(@NonNull Currency currency) {
+  private boolean register(@NonNull Currency currency) {
     if (!contains(currency)) {
       currencies.put(currency.identifier(), currency);
       return true;
@@ -61,6 +68,14 @@ public class CurrencyRegistry implements Registry<Currency> {
 
   public @Nullable Currency currency(@Nullable String id) {
     return (id == null || id.isEmpty()) ? null : currencies.get(id.toLowerCase(Locale.ROOT));
+  }
+
+  public @Nullable Currency primary() {
+    return primary;
+  }
+
+  public int size() {
+    return currencies.size();
   }
 
   public @NonNull Stream<Currency> stream() {

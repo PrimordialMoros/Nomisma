@@ -28,7 +28,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -69,28 +72,28 @@ public class CurrencyLoader {
 
   public @NonNull CompletableFuture<Void> loadAllCurrencies() {
     return Tasker.async(() -> {
-      try {
-        Files.walk(currencyDir, 1).filter(this::isJson).forEach(this::loadCurrency);
+      try (Stream<Path> stream = Files.walk(currencyDir, 1)) {
+        Collection<Currency> currencies = stream.filter(this::isJson).map(this::loadCurrency)
+          .filter(Objects::nonNull).toList();
+        Registries.CURRENCIES.registerAndLock(currencies);
       } catch (IOException e) {
         e.printStackTrace();
       }
     });
   }
 
-  private void loadCurrency(@NonNull Path path) {
-    final long time = System.currentTimeMillis();
+  private Currency loadCurrency(@NonNull Path path) {
     try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(path.toFile()), StandardCharsets.UTF_8))) {
       Currency currency = ValidatedCurrency.validatedCopy(gson.fromJson(reader, CurrencyData.class));
       if (currency == null) {
         Nomisma.logger().warn("Invalid currency data: " + path);
-        return;
-      }
-      if (Registries.CURRENCIES.register(currency)) {
-        Nomisma.logger().info("Successfully loaded " + currency.identifier());
+      } else {
+        return currency;
       }
     } catch (IOException e) {
       e.printStackTrace();
     }
+    return null;
   }
 
   private @NonNull CompletableFuture<@NonNull Boolean> saveCurrency(@NonNull String name, @NonNull Currency currency) {

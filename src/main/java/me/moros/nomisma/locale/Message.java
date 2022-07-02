@@ -58,14 +58,23 @@ public interface Message {
     .args(text(target, GRAY), balance);
 
   Args1<Integer> BALANCETOP_MAX_PAGE = maxPage -> translatable("nomisma.command.balancetop.max-page", YELLOW)
-    .args(Component.text(maxPage));
+    .args(text(maxPage));
 
   Args0 BALANCETOP_EMPTY = () -> translatable("nomisma.command.balancetop.empty", RED);
 
   Args1<Integer> BALANCETOP_HEADER = page -> translatable("nomisma.command.balancetop.header", DARK_AQUA)
-    .args(Component.text(page, AQUA));
+    .args(text(page, AQUA));
 
   Args0 RELOAD = () -> brand(translatable("nomisma.command.reload", GREEN));
+
+  Args2<String, String> MIGRATE_STARTED = (plugin, currency) -> translatable("nomisma.command.migrate.started", GREEN)
+    .args(text(plugin), text(currency, DARK_AQUA));
+  Args2<String, String> MIGRATE_SUCCESS = (plugin, currency) -> translatable("nomisma.command.migrate.success", GREEN)
+    .args(text(plugin), text(currency, DARK_AQUA));
+  Args1<String> MIGRATE_NOT_LOADED = plugin -> translatable("nomisma.command.migrate.not-loaded", RED)
+    .args(text(plugin));
+  Args1<String> MIGRATE_ERROR = plugin -> translatable("nomisma.command.migrate.error", RED)
+    .args(text(plugin));
 
   Args2<String, String> VERSION_COMMAND_HOVER = (author, link) -> translatable("nomisma.command.version.hover", DARK_AQUA)
     .args(text(author, GREEN), text(link, GREEN));

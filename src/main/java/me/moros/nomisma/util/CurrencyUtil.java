@@ -65,7 +65,10 @@ public class CurrencyUtil {
     return BigDecimal.valueOf(amount).compareTo(value) > 0 ? Math.nextAfter(amount, Double.NEGATIVE_INFINITY) : amount;
   }
 
-  public static @Nullable String sanitizeInput(@NonNull String input) {
+  public static @Nullable String sanitizeInput(@Nullable String input) {
+    if (input == null) {
+      return null;
+    }
     String output = ILLEGAL_IDENTIFIER.matcher(input).replaceAll("").toLowerCase(Locale.ROOT);
     if (output.isEmpty()) {
       return null;

@@ -102,6 +102,10 @@ public final class UserRegistry implements Registry<User> {
     return cache == null ? null : cache.synchronous().get(uuid);
   }
 
+  public @NonNull User userWithoutCache(@NonNull UUID uuid, @NonNull String name) {
+    return storage.createProfile(uuid, name);
+  }
+
   public @NonNull CompletableFuture<@Nullable User> user(@NonNull String name) {
     OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
     if (player != null) {

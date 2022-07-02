@@ -21,17 +21,23 @@ package me.moros.nomisma.command;
 
 import java.util.Collection;
 
+import cloud.commandframework.arguments.standard.EnumArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.arguments.standard.StringArgument.StringMode;
 import cloud.commandframework.meta.CommandMeta;
 import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.locale.Message;
+import me.moros.nomisma.migration.MigrationType;
+import me.moros.nomisma.migration.MigrationUtility;
+import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
+import me.moros.nomisma.util.Tasker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -46,6 +52,8 @@ public final class NomismaCommand {
   private void construct() {
     var builder = manager.commandBuilder("nomisma")
       .meta(CommandMeta.DESCRIPTION, "Base command for Nomisma");
+    var currencyArg = manager.argumentBuilder(Currency.class, "currency")
+      .asOptionalWithDefault("primary");
     //noinspection ConstantConditions
     manager.command(builder.handler(c -> manager.help().queryCommands("", c.getSender())))
       .command(builder.literal("reload")
@@ -60,6 +68,12 @@ public final class NomismaCommand {
         .meta(CommandMeta.DESCRIPTION, "View all loaded currencies")
         .permission(CommandPermissions.LIST)
         .handler(c -> onListCurrencies(c.getSender()))
+      ).command(builder.literal("migrate")
+        .meta(CommandMeta.DESCRIPTION, "Migrate balances from another plugin into Nomisma")
+        .permission(CommandPermissions.MIGRATE)
+        .argument(EnumArgument.of(MigrationType.class, "type"))
+        .argument(currencyArg.build())
+        .handler(c -> onMigrate(c.getSender(), c.get("type"), c.get("currency")))
       ).command(builder.literal("help", "h")
         .meta(CommandMeta.DESCRIPTION, "View info about a command")
         .permission(CommandPermissions.HELP)
@@ -92,5 +106,24 @@ public final class NomismaCommand {
     }
     Message.CURRENCIES_HEADER.send(user);
     currencies.forEach(user::sendMessage);
+  }
+
+  public static void onMigrate(CommandSender user, MigrationType type, Currency currency) {
+    Tasker.sync(() -> {
+      if (Bukkit.getPluginManager().isPluginEnabled(type.plugin())) {
+        MigrationUtility utility = type.utility();
+        Message.MIGRATE_STARTED.send(user, type.name(), currency.identifier());
+        utility.apply(currency).thenAccept(success -> {
+          if (success) {
+            Registries.USERS.saveAll(); // Process pending tasks
+            Message.MIGRATE_SUCCESS.send(user, type.name(), currency.identifier());
+          } else {
+            Message.MIGRATE_ERROR.send(user, type.name());
+          }
+        });
+      } else {
+        Message.MIGRATE_NOT_LOADED.send(user, type.name());
+      }
+    }, 0);
   }
 }

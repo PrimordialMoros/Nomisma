@@ -77,7 +77,12 @@ public class Nomisma extends JavaPlugin {
       setEnabled(false);
       return;
     }
-    loader.loadAllCurrencies();
+    final long startTime = System.currentTimeMillis();
+    loader.loadAllCurrencies().thenRun(() -> {
+      long delta = System.currentTimeMillis() - startTime;
+      int size = Registries.CURRENCIES.size();
+      logger.info("Successfully loaded " + size + (size == 1 ? " currency" : " currencies") + " (" + delta + "ms)");
+    });
     storage = Objects.requireNonNull(StorageFactory.createInstance(), "Unable to connect to database!");
     Registries.CURRENCIES.forEach(storage::createColumn);
 
@@ -111,7 +116,7 @@ public class Nomisma extends JavaPlugin {
     if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
       new NomismaExpansion().register();
     }
-    Currency primary = Registries.CURRENCIES.stream().filter(Currency::primary).findFirst().orElse(null);
+    Currency primary = Registries.CURRENCIES.primary();
     if (primary == null) {
       logger.warn("No primary currency detected!");
     } else {

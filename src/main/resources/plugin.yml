@@ -3,7 +3,7 @@ description: Multi-Currency plugin
 author: Moros
 version: ${pluginVersion}
 main: me.moros.nomisma.Nomisma
-softdepend: [Vault, PlaceholderAPI]
+softdepend: [Vault, PlaceholderAPI, Essentials, GemsEconomy]
 loadbefore: [BossShopPro]
 api-version: 1.17
 permissions:
@@ -14,6 +14,7 @@ permissions:
       nomisma.player: true
       nomisma.command.reload: true
       nomisma.command.list: true
+      nomisma.command.migrate: true
   nomisma.player:
     default: true
     children:

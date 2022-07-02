@@ -20,6 +20,7 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+    maven("https://repo.essentialsx.net/releases/")
     maven("https://jitpack.io")
     flatDir { dirs("$rootDir/libs") }
 }
@@ -41,8 +42,8 @@ dependencies {
     }
     implementation("com.h2database", "h2", "2.1.212")
     implementation("org.bstats", "bstats-bukkit", "2.2.1")
-    implementation("cloud.commandframework","cloud-paper", "1.6.2")
-    implementation("cloud.commandframework","cloud-minecraft-extras", "1.6.2") {
+    implementation("cloud.commandframework","cloud-paper", "1.7.0")
+    implementation("cloud.commandframework","cloud-minecraft-extras", "1.7.0") {
         exclude(group = "net.kyori")
     }
     implementation("org.spongepowered", "configurate-hocon", "4.1.2")
@@ -51,6 +52,8 @@ dependencies {
     compileOnly("me.clip", "placeholderapi", "2.11.1")
     compileOnly("com.github.MilkBowl", "VaultAPI", "1.7")
     compileOnly("org.black_ixx", "BossShopPro", "2.0.9")
+    compileOnly("me.xanium", "GemsEconomy", "4.9.2")
+    compileOnly("net.essentialsx", "EssentialsX", "2.19.0")
 }
 
 configurations.implementation {

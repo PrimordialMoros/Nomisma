@@ -17,23 +17,29 @@
  * along with Nomisma. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package me.moros.nomisma.command;
+package me.moros.nomisma.migration;
 
-import cloud.commandframework.permission.CommandPermission;
-import cloud.commandframework.permission.Permission;
+import java.util.function.Function;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-public final class CommandPermissions {
-  private CommandPermissions() {
+public enum MigrationType {
+  ESSENTIALS("Essentials", MigrationEssentials::new),
+  GEMS("GemsEconomy", MigrationsGemsEconomy::new);
+
+  private final String pluginName;
+  private final Function<MigrationType, MigrationUtility> supplier;
+
+  MigrationType(String pluginName, Function<MigrationType, MigrationUtility> supplier) {
+    this.pluginName = pluginName;
+    this.supplier = supplier;
   }
 
-  public static final CommandPermission HELP = create("help");
-  public static final CommandPermission LIST = create("list");
-  public static final CommandPermission VERSION = create("version");
-  public static final CommandPermission RELOAD = create("reload");
-  public static final CommandPermission MIGRATE = create("migrate");
+  public @NonNull String plugin() {
+    return pluginName;
+  }
 
-  private static Permission create(@NonNull String node) {
-    return Permission.of("nomisma.command." + node);
+  public @NonNull MigrationUtility utility() {
+    return supplier.apply(this);
   }
 }

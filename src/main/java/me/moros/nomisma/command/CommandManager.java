@@ -33,6 +33,7 @@ import cloud.commandframework.minecraft.extras.MinecraftHelp;
 import cloud.commandframework.paper.PaperCommandManager;
 import io.leangen.geantyref.TypeToken;
 import me.moros.nomisma.Nomisma;
+import me.moros.nomisma.command.parser.CurrencyParser;
 import me.moros.nomisma.command.parser.UserParser;
 import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.model.Currency;
@@ -58,7 +59,7 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
     registerParsers();
     registerExceptionHandler();
     registerAsynchronousCompletions();
-    setCommandSuggestionProcessor(this::suggestionProvider);
+    commandSuggestionProcessor(this::suggestionProvider);
 
     help = MinecraftHelp.createNative("/nomisma help", this);
     help.setMaxResultsPerPage(8);
@@ -85,7 +86,8 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
   }
 
   private void registerParsers() {
-    getParserRegistry().registerParserSupplier(TypeToken.get(User.class), options -> new UserParser());
+    parserRegistry().registerParserSupplier(TypeToken.get(User.class), options -> new UserParser());
+    parserRegistry().registerParserSupplier(TypeToken.get(Currency.class), options -> new CurrencyParser());
   }
 
   private void registerExceptionHandler() {
