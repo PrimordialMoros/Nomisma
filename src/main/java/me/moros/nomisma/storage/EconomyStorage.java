@@ -20,6 +20,7 @@
 package me.moros.nomisma.storage;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,6 +37,8 @@ public interface EconomyStorage extends Storage {
   @Nullable User loadProfile(@NonNull UUID uuid);
 
   @Nullable User loadProfile(@NonNull String name);
+
+  @NonNull Collection<@NonNull User> loadAllProfiles();
 
   void saveProfileAsync(@NonNull User user);
 

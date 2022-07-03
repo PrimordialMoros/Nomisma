@@ -152,6 +152,18 @@ public final class StorageImpl implements EconomyStorage {
   }
 
   @Override
+  public @NonNull Collection<@NonNull User> loadAllProfiles() {
+    try {
+      return DB.withHandle(handle ->
+        handle.createQuery(SqlQueries.PLAYER_SELECT_ALL.query()).map(this::profileRowMapper).stream().toList()
+      );
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
+    return List.of();
+  }
+
+  @Override
   public void saveProfileAsync(@NonNull User user) {
     Map<Currency, BigDecimal> snapshot = user.balanceSnapshot();
     Tasker.async(() -> saveProfile(user, snapshot));

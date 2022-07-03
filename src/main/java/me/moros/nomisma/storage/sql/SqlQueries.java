@@ -27,7 +27,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 public enum SqlQueries {
   PLAYER_INSERT("INSERT INTO nomisma_players (player_uuid, player_name) VALUES(?, ?)"),
   PLAYER_SELECT_BY_UUID("SELECT * FROM nomisma_players WHERE player_uuid=? LIMIT 1"),
-  PLAYER_SELECT_BY_NAME("SELECT * FROM nomisma_players WHERE player_name=? LIMIT 1");
+  PLAYER_SELECT_BY_NAME("SELECT * FROM nomisma_players WHERE player_name=? LIMIT 1"),
+  PLAYER_SELECT_ALL("SELECT * FROM nomisma_players");
 
   private final String query;
 

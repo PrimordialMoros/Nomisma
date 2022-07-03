@@ -24,9 +24,11 @@ import java.util.Collection;
 import cloud.commandframework.arguments.standard.EnumArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.arguments.standard.StringArgument.StringMode;
+import cloud.commandframework.extra.confirmation.CommandConfirmationManager;
 import cloud.commandframework.meta.CommandMeta;
 import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.locale.Message;
+import me.moros.nomisma.migration.BalanceImporter;
 import me.moros.nomisma.migration.MigrationType;
 import me.moros.nomisma.migration.MigrationUtility;
 import me.moros.nomisma.model.Currency;
@@ -56,7 +58,10 @@ public final class NomismaCommand {
       .asOptionalWithDefault("primary");
     //noinspection ConstantConditions
     manager.command(builder.handler(c -> manager.help().queryCommands("", c.getSender())))
-      .command(builder.literal("reload")
+      .command(builder.literal("confirm")
+        .meta(CommandMeta.DESCRIPTION, "Confirm a pending command")
+        .handler(manager.confirmationHandler())
+      ).command(builder.literal("reload")
         .meta(CommandMeta.DESCRIPTION, "Reload the plugin")
         .permission(CommandPermissions.RELOAD)
         .handler(c -> onReload(c.getSender()))
@@ -79,6 +84,11 @@ public final class NomismaCommand {
         .permission(CommandPermissions.HELP)
         .argument(StringArgument.optional("query", StringMode.GREEDY))
         .handler(c -> manager.help().queryCommands(c.getOrDefault("query", ""), c.getSender()))
+      ).command(builder.literal("import")
+        .meta(CommandMeta.DESCRIPTION, "Import balances from PlayerPoints text file(s) into Nomisma")
+        .meta(CommandConfirmationManager.META_CONFIRMATION_REQUIRED, true)
+        .permission(CommandPermissions.IMPORT)
+        .handler(c -> onImport(c.getSender()))
       );
   }
 
@@ -125,5 +135,16 @@ public final class NomismaCommand {
         Message.MIGRATE_NOT_LOADED.send(user, type.name());
       }
     }, 0);
+  }
+
+  public static void onImport(CommandSender user) {
+    new BalanceImporter().importData().thenAccept(success -> {
+      if (success) {
+        Registries.USERS.saveAll(); // Process pending tasks
+        Message.IMPORT_SUCCESS.send(user);
+      } else {
+        Message.IMPORT_ERROR.send(user);
+      }
+    });
   }
 }

@@ -38,10 +38,13 @@ public interface Message {
     .append(text("Nomisma", DARK_AQUA))
     .append(text("] ", DARK_GRAY));
 
-  Args0 TARGET_SELF = () -> translatable("nomisma.command.target-self", RED);
+  Args0 CONFIRM_REQUIRED = () -> translatable("nomisma.command.confirm.required", YELLOW);
+  Args0 CONFIRM_NO_PENDING = () -> translatable("nomisma.command.confirm.no-pending", RED);
+
   Args0 NO_CURRENCIES = () -> translatable("nomisma.command.list.no-currencies", RED);
   Args0 CURRENCIES_HEADER = () -> translatable("nomisma.command.list.header", DARK_AQUA);
 
+  Args0 TARGET_SELF = () -> translatable("nomisma.command.pay.target-self", RED);
   Args1<Component> INSUFFICIENT_FUNDS = currency -> translatable("nomisma.command.pay.insufficient-funds", YELLOW)
     .args(currency);
 
@@ -75,6 +78,8 @@ public interface Message {
     .args(text(plugin));
   Args1<String> MIGRATE_ERROR = plugin -> translatable("nomisma.command.migrate.error", RED)
     .args(text(plugin));
+  Args0 IMPORT_SUCCESS = () -> translatable("nomisma.command.import.success", GREEN);
+  Args0 IMPORT_ERROR = () -> translatable("nomisma.command.import.error", RED);
 
   Args2<String, String> VERSION_COMMAND_HOVER = (author, link) -> translatable("nomisma.command.version.hover", DARK_AQUA)
     .args(text(author, GREEN), text(link, GREEN));

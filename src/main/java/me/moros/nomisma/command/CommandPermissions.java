@@ -32,6 +32,7 @@ public final class CommandPermissions {
   public static final CommandPermission VERSION = create("version");
   public static final CommandPermission RELOAD = create("reload");
   public static final CommandPermission MIGRATE = create("migrate");
+  public static final CommandPermission IMPORT = create("import");
 
   private static Permission create(@NonNull String node) {
     return Permission.of("nomisma.command." + node);

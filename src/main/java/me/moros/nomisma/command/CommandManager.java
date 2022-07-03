@@ -22,11 +22,14 @@ package me.moros.nomisma.command;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
+import cloud.commandframework.execution.CommandExecutionHandler;
 import cloud.commandframework.execution.preprocessor.CommandPreprocessingContext;
+import cloud.commandframework.extra.confirmation.CommandConfirmationManager;
 import cloud.commandframework.minecraft.extras.AudienceProvider;
 import cloud.commandframework.minecraft.extras.MinecraftExceptionHandler;
 import cloud.commandframework.minecraft.extras.MinecraftHelp;
@@ -51,6 +54,7 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
   private static Pattern INVALID_NAMES;
 
   private final MinecraftHelp<CommandSender> help;
+  private final CommandConfirmationManager<CommandSender> confirmationManager;
 
   public CommandManager(@NonNull Nomisma plugin) throws Exception {
     super(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>newBuilder().withSynchronousParsing().build(), Function.identity(), Function.identity());
@@ -63,6 +67,9 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
 
     help = MinecraftHelp.createNative("/nomisma help", this);
     help.setMaxResultsPerPage(8);
+
+    confirmationManager = createConfirmationManager();
+    confirmationManager.registerConfirmationProcessor(this);
 
     new NomismaCommand(this);
     for (Currency currency : Registries.CURRENCIES) {
@@ -102,6 +109,18 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
       .withCommandExecutionHandler()
       .withDecorator(c -> text().append(prefixComponent).append(c).build())
       .apply(this, AudienceProvider.nativeAudience());
+  }
+
+  private CommandConfirmationManager<CommandSender> createConfirmationManager() {
+    return new CommandConfirmationManager<>(30L,
+      TimeUnit.SECONDS,
+      ctx -> Message.CONFIRM_REQUIRED.send(ctx.getCommandContext().getSender()),
+      Message.CONFIRM_NO_PENDING::send
+    );
+  }
+
+  CommandExecutionHandler<CommandSender> confirmationHandler() {
+    return confirmationManager.createConfirmationExecutionHandler();
   }
 
   private List<String> suggestionProvider(CommandPreprocessingContext<CommandSender> context, List<String> strings) {

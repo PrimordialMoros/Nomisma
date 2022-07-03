@@ -15,6 +15,7 @@ permissions:
       nomisma.command.reload: true
       nomisma.command.list: true
       nomisma.command.migrate: true
+      nomisma.command.import: true
   nomisma.player:
     default: true
     children:
