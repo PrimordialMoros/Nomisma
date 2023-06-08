@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -26,7 +26,6 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.arguments.standard.StringArgument.StringMode;
 import cloud.commandframework.extra.confirmation.CommandConfirmationManager;
 import cloud.commandframework.meta.CommandMeta;
-import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.migration.BalanceImporter;
 import me.moros.nomisma.migration.MigrationType;
@@ -34,19 +33,17 @@ import me.moros.nomisma.migration.MigrationUtility;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
-import me.moros.nomisma.util.Tasker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class NomismaCommand {
   private final CommandManager manager;
 
-  NomismaCommand(@NonNull CommandManager manager) {
+  NomismaCommand(CommandManager manager) {
     this.manager = manager;
     construct();
   }
@@ -92,22 +89,21 @@ public final class NomismaCommand {
       );
   }
 
-  public static void onReload(CommandSender sender) {
-    Nomisma.translationManager().reload();
-    Nomisma.configManager().reload();
+  private void onReload(CommandSender sender) {
+    manager.getOwningPlugin().translationManager().reload();
     Message.RELOAD.send(sender);
   }
 
-  public static void onVersion(CommandSender user) {
+  private void onVersion(CommandSender user) {
     String link = "https://github.com/PrimordialMoros/Nomisma";
     Component version = Message.brand(Component.text("Version: ", NamedTextColor.DARK_AQUA))
-      .append(Component.text(Nomisma.version(), NamedTextColor.GREEN))
-      .hoverEvent(HoverEvent.showText(Message.VERSION_COMMAND_HOVER.build(Nomisma.author(), link)))
+      .append(Component.text(manager.getOwningPlugin().version(), NamedTextColor.GREEN))
+      .hoverEvent(HoverEvent.showText(Message.VERSION_COMMAND_HOVER.build(manager.getOwningPlugin().author(), link)))
       .clickEvent(ClickEvent.openUrl(link));
     user.sendMessage(version);
   }
 
-  public static void onListCurrencies(CommandSender user) {
+  private void onListCurrencies(CommandSender user) {
     Collection<Component> currencies = Registries.CURRENCIES.stream().map(CurrencyUtil::createInfo).toList();
     int count = currencies.size();
     if (count == 0) {
@@ -118,10 +114,10 @@ public final class NomismaCommand {
     currencies.forEach(user::sendMessage);
   }
 
-  public static void onMigrate(CommandSender user, MigrationType type, Currency currency) {
-    Tasker.sync(() -> {
+  private void onMigrate(CommandSender user, MigrationType type, Currency currency) {
+    manager.getOwningPlugin().executor().sync().submit(() -> {
       if (Bukkit.getPluginManager().isPluginEnabled(type.plugin())) {
-        MigrationUtility utility = type.utility();
+        MigrationUtility utility = type.utility(manager.getOwningPlugin());
         Message.MIGRATE_STARTED.send(user, type.name(), currency.identifier());
         utility.apply(currency).thenAccept(success -> {
           if (success) {
@@ -134,11 +130,11 @@ public final class NomismaCommand {
       } else {
         Message.MIGRATE_NOT_LOADED.send(user, type.name());
       }
-    }, 0);
+    });
   }
 
-  public static void onImport(CommandSender user) {
-    new BalanceImporter().importData().thenAccept(success -> {
+  private void onImport(CommandSender user) {
+    new BalanceImporter(manager.getOwningPlugin()).importData().thenAccept(success -> {
       if (success) {
         Registries.USERS.saveAll(); // Process pending tasks
         Message.IMPORT_SUCCESS.send(user);

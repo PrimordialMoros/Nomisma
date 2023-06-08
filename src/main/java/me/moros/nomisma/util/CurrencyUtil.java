@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -34,7 +34,6 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class CurrencyUtil {
@@ -60,7 +59,7 @@ public class CurrencyUtil {
   private CurrencyUtil() {
   }
 
-  public static double doubleValue(@NonNull BigDecimal value) {
+  public static double doubleValue(BigDecimal value) {
     double amount = value.doubleValue();
     return BigDecimal.valueOf(amount).compareTo(value) > 0 ? Math.nextAfter(amount, Double.NEGATIVE_INFINITY) : amount;
   }
@@ -76,12 +75,12 @@ public class CurrencyUtil {
     return output.length() > 16 ? output.substring(0, 16) : output;
   }
 
-  public static @NonNull String sanitizeCmdString(@NonNull String input) {
+  public static String sanitizeCmdString(String input) {
     String output = NON_ALPHABETICAL.matcher(input).replaceAll("").toLowerCase(Locale.ROOT);
     return output.length() > 16 ? output.substring(0, 16) : output;
   }
 
-  public static @Nullable BigDecimal parse(@NonNull String input) {
+  public static @Nullable BigDecimal parse(String input) {
     try {
       BigDecimal value = (BigDecimal) FORMAT.parse(input);
       return value.stripTrailingZeros();
@@ -90,7 +89,7 @@ public class CurrencyUtil {
     }
   }
 
-  public static @NonNull Component format(@NonNull Currency currency, @NonNull BigDecimal value) {
+  public static Component format(Currency currency, BigDecimal value) {
     Component form = value.compareTo(BigDecimal.ONE) > 0 ? currency.plural() : currency.singular();
     TagResolver resolver = TagResolver.builder()
       .resolver(Placeholder.component("currency", form))
@@ -98,11 +97,11 @@ public class CurrencyUtil {
     return MINI_SERIALIZER.deserialize(currency.format(), resolver);
   }
 
-  public static @NonNull String formatPlain(@NonNull Currency currency, @NonNull BigDecimal value) {
+  public static String formatPlain(Currency currency, BigDecimal value) {
     return PlainTextComponentSerializer.plainText().serialize(format(currency, value));
   }
 
-  public static @NonNull Component createInfo(@NonNull Currency c) {
+  public static Component createInfo(Currency c) {
     final Component infoDetails = Component.text()
       .append(Component.text("Id: ", NamedTextColor.DARK_AQUA))
       .append(Component.text(c.identifier(), NamedTextColor.GREEN)).append(Component.newline())

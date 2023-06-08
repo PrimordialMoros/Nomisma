@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -29,7 +29,6 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.storage.EconomyStorage;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class Leaderboard {
   public static final int MAX_PAGE = 10;
@@ -37,26 +36,26 @@ public class Leaderboard {
 
   private final AsyncLoadingCache<Currency, LeaderboardResult> cache;
 
-  public Leaderboard(@NonNull EconomyStorage storage) {
-    long time = Nomisma.configManager().config().node("leaderboard-cache-minutes").getLong(5);
+  public Leaderboard(Nomisma plugin, EconomyStorage storage) {
+    long time = plugin.configManager().config().leaderboardCacheMinutes();
     cache = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(time)).buildAsync(c -> storage.topBalances(c, 0, 100));
   }
 
-  public @NonNull CompletableFuture<@NonNull LeaderboardResult> getTop(@NonNull Currency currency) {
+  public CompletableFuture<LeaderboardResult> getTop(Currency currency) {
     return cache.get(currency);
   }
 
-  public record LeaderboardResult(@NonNull List<@NonNull LeaderboardEntry> entries) {
-    public @NonNull Stream<@NonNull LeaderboardEntry> stream() {
+  public record LeaderboardResult(List<LeaderboardEntry> entries) {
+    public Stream<LeaderboardEntry> stream() {
       return entries.stream();
     }
 
     @Override
-    public @NonNull List<@NonNull LeaderboardEntry> entries() {
+    public List<LeaderboardEntry> entries() {
       return List.copyOf(entries);
     }
   }
 
-  public record LeaderboardEntry(@NonNull String name, @NonNull BigDecimal balance) {
+  public record LeaderboardEntry(String name, BigDecimal balance) {
   }
 }

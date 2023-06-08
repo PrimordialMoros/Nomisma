@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -22,30 +22,29 @@ package me.moros.nomisma.model;
 import java.util.Collection;
 
 import net.kyori.adventure.text.Component;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public sealed interface Currency permits ValidatedCurrency {
-  @NonNull String identifier();
+  String identifier();
 
-  @NonNull String format();
+  String format();
 
-  @NonNull String singularPlain();
+  String singularPlain();
 
-  @NonNull Component singular();
+  Component singular();
 
-  @NonNull String pluralPlain();
+  String pluralPlain();
 
-  @NonNull Component plural();
+  Component plural();
 
   boolean decimal();
 
   boolean primary();
 
-  @NonNull String commandPrefix();
+  String commandPrefix();
 
-  @NonNull Collection<@NonNull String> commandAliases();
+  Collection<String> commandAliases();
 
-  default @NonNull String permission() {
+  default String permission() {
     return "nomisma.command." + identifier();
   }
 }

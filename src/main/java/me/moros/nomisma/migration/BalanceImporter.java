@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -31,24 +31,26 @@ import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
-import me.moros.nomisma.util.Tasker;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class BalanceImporter {
-  public BalanceImporter() {
+  private final Nomisma parent;
+
+  public BalanceImporter(Nomisma parent) {
+    this.parent = parent;
   }
 
-  public @NonNull CompletableFuture<@NonNull Boolean> importData() {
-    return Tasker.async(this::importBalances);
+  public CompletableFuture<Boolean> importData() {
+    return parent.executor().async().submit(this::importBalances);
   }
 
   private boolean importBalances() {
     Map<Currency, FileConfiguration> data = new HashMap<>();
     for (Currency c : Registries.CURRENCIES) {
-      File file = new File(Nomisma.plugin().getDataFolder(), c.identifier() + ".yml");
+      File file = parent.path().resolve(c.identifier() + ".yml").toFile();
       if (file.exists()) {
         data.put(c, YamlConfiguration.loadConfiguration(file));
       }
@@ -94,8 +96,8 @@ public class BalanceImporter {
     }
   }
 
-  private record TempUser(UUID uuid, String name, Map<Currency, BigDecimal> balance) {
-    private TempUser(UUID uuid, String name) {
+  private record TempUser(UUID uuid, @Nullable String name, Map<Currency, BigDecimal> balance) {
+    private TempUser(UUID uuid, @Nullable String name) {
       this(uuid, name, new ConcurrentHashMap<>());
     }
   }

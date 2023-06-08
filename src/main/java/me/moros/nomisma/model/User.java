@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -28,22 +28,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import me.moros.nomisma.registry.Registries;
 import net.kyori.adventure.identity.Identity;
 import org.bukkit.OfflinePlayer;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class User implements Identity, BalanceHolder {
   private final UUID uuid;
   private final String name;
   private final Map<Currency, BigDecimal> balance;
 
-  public User(@NonNull UUID uuid, @NonNull String name) {
+  public User(UUID uuid, String name) {
     this(uuid, name, new ConcurrentHashMap<>());
   }
 
-  public User(@NonNull OfflinePlayer player) {
+  public User(OfflinePlayer player) {
     this(player.getUniqueId(), Objects.requireNonNull(player.getName()), new ConcurrentHashMap<>());
   }
 
-  public User(@NonNull UUID uuid, @NonNull String name, @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balance) {
+  public User(UUID uuid, String name, Map<Currency, BigDecimal> balance) {
     this.uuid = uuid;
     this.name = name;
     this.balance = new ConcurrentHashMap<>();
@@ -51,22 +50,22 @@ public class User implements Identity, BalanceHolder {
   }
 
   @Override
-  public @NonNull UUID uuid() {
+  public UUID uuid() {
     return uuid;
   }
 
-  public @NonNull String name() {
+  public String name() {
     return name;
   }
 
   @Override
-  public @NonNull BigDecimal balance(@NonNull Currency currency) {
+  public BigDecimal balance(Currency currency) {
     Objects.requireNonNull(currency);
     return balance.computeIfAbsent(currency, c -> BigDecimal.ZERO);
   }
 
   @Override
-  public @NonNull BigDecimal set(@NonNull Currency currency, @NonNull BigDecimal amount) {
+  public BigDecimal set(Currency currency, BigDecimal amount) {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
     balance.put(currency, amount);
@@ -75,7 +74,7 @@ public class User implements Identity, BalanceHolder {
   }
 
   @Override
-  public @NonNull BigDecimal add(@NonNull Currency currency, @NonNull BigDecimal amount) {
+  public BigDecimal add(Currency currency, BigDecimal amount) {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
     BigDecimal result = balance.compute(currency, (c, bd) -> bd == null ? amount : bd.add(amount));
@@ -84,7 +83,7 @@ public class User implements Identity, BalanceHolder {
   }
 
   @Override
-  public @NonNull BigDecimal subtract(@NonNull Currency currency, @NonNull BigDecimal amount) {
+  public BigDecimal subtract(Currency currency, BigDecimal amount) {
     Objects.requireNonNull(currency);
     Objects.requireNonNull(amount);
     BigDecimal bal = balance.computeIfAbsent(currency, c -> BigDecimal.ZERO);
@@ -98,7 +97,7 @@ public class User implements Identity, BalanceHolder {
   }
 
   @Override
-  public @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balanceSnapshot() {
+  public Map<Currency, BigDecimal> balanceSnapshot() {
     return Map.copyOf(balance);
   }
 }

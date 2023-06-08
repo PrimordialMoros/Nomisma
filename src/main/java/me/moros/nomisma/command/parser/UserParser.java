@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -34,11 +34,10 @@ import me.moros.nomisma.registry.Registries;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class UserParser implements ArgumentParser<CommandSender, User> {
   @Override
-  public @NonNull ArgumentParseResult<User> parse(@NonNull CommandContext<CommandSender> commandContext, @NonNull Queue<@NonNull String> inputQueue) {
+  public ArgumentParseResult<User> parse(CommandContext<CommandSender> commandContext, Queue<String> inputQueue) {
     String input = CommandManager.sanitizeName(inputQueue.peek());
     if (input == null) {
       return ArgumentParseResult.failure(new NoInputProvidedException(UserParser.class, commandContext));
@@ -59,7 +58,7 @@ public final class UserParser implements ArgumentParser<CommandSender, User> {
   }
 
   @Override
-  public @NonNull List<@NonNull String> suggestions(@NonNull CommandContext<CommandSender> commandContext, @NonNull String input) {
+  public List<String> suggestions(CommandContext<CommandSender> commandContext, String input) {
     Predicate<Player> canSee;
     if (commandContext.getSender() instanceof Player sender) {
       canSee = sender::canSee;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -22,8 +22,7 @@ package me.moros.nomisma.migration;
 import java.util.concurrent.CompletableFuture;
 
 import me.moros.nomisma.model.Currency;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public interface MigrationUtility {
-  @NonNull CompletableFuture<@NonNull Boolean> apply(@NonNull Currency currency);
+  CompletableFuture<Boolean> apply(Currency currency);
 }

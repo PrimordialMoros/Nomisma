@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -19,27 +19,27 @@
 
 package me.moros.nomisma.migration;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import me.moros.nomisma.Nomisma;
 
 public enum MigrationType {
   ESSENTIALS("Essentials", MigrationEssentials::new),
   GEMS("GemsEconomy", MigrationsGemsEconomy::new);
 
   private final String pluginName;
-  private final Function<MigrationType, MigrationUtility> supplier;
+  private final BiFunction<Nomisma, MigrationType, MigrationUtility> supplier;
 
-  MigrationType(String pluginName, Function<MigrationType, MigrationUtility> supplier) {
+  MigrationType(String pluginName, BiFunction<Nomisma, MigrationType, MigrationUtility> supplier) {
     this.pluginName = pluginName;
     this.supplier = supplier;
   }
 
-  public @NonNull String plugin() {
+  public String plugin() {
     return pluginName;
   }
 
-  public @NonNull MigrationUtility utility() {
-    return supplier.apply(this);
+  public MigrationUtility utility(Nomisma parent) {
+    return supplier.apply(parent, this);
   }
 }

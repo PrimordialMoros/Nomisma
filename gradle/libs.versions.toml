@@ -1,0 +1,43 @@
+[versions]
+shadow = "8.1.1"
+configurate = "4.1.2"
+cloud = "1.8.3"
+tasker = "1.0.0-SNAPSHOT"
+paper = "1.18.2-R0.1-SNAPSHOT"
+
+[libraries]
+storage = { module = "me.moros:storage", version = "3.2.0" }
+
+tasker-core = { module = "me.moros:tasker-core", version.ref = "tasker" }
+tasker-bukkit = { module = "me.moros:tasker-bukkit", version.ref = "tasker" }
+
+cloud-minecraft = { module = "cloud.commandframework:cloud-minecraft-extras", version.ref = "cloud" }
+cloud-paper = { module = "cloud.commandframework:cloud-paper", version.ref = "cloud" }
+
+configurate-hocon = { module = "org.spongepowered:configurate-hocon", version.ref = "configurate" }
+
+paper = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
+bstats-bukkit = { module = "org.bstats:bstats-bukkit", version = "3.0.2" }
+
+papi = { module = "me.clip:placeholderapi", version = "2.11.3" }
+vault = { module = "com.github.MilkBowl:VaultAPI", version = "1.7" }
+bossshoppro = { module = "org.black_ixx:BossShopPro", version = "2.0.9" }
+gemseconomy = { module = "me.xanium:GemsEconomy", version = "4.9.2" }
+essentials = { module = "net.essentialsx:EssentialsX", version = "2.20.0" }
+
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.1.6" }
+jdbi = { module = "org.jdbi:jdbi3-core", version = "3.38.3" }
+hikari = { module = "com.zaxxer:HikariCP", version = "5.0.1" }
+
+# Databases
+mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version = "3.1.4" }
+postgresql = { module = "org.postgresql:postgresql", version = "42.6.0" }
+h2 = { module = "com.h2database:h2", version = "2.1.214" }
+hsql = { module = "org.hsqldb:hsqldb", version = "2.7.2" }
+
+[bundles]
+drivers = ["mariadb", "postgresql", "h2", "hsql"]
+
+[plugins]
+checker = { id = "org.checkerframework", version = "0.6.28" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }

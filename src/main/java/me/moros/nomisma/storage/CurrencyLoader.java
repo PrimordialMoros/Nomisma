@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -41,17 +41,17 @@ import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.CurrencyData;
 import me.moros.nomisma.model.ValidatedCurrency;
 import me.moros.nomisma.registry.Registries;
-import me.moros.nomisma.util.Tasker;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class CurrencyLoader {
   public static final String CURRENCY_SUFFIX = ".json";
 
+  private final Nomisma parent;
   private final Path currencyDir;
   private final Gson gson;
 
-  private CurrencyLoader(Path currencyDir) {
+  private CurrencyLoader(Nomisma parent, Path currencyDir) {
+    this.parent = parent;
     this.currencyDir = currencyDir;
     gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     if (!currencyFileExists("example")) {
@@ -59,19 +59,19 @@ public class CurrencyLoader {
     }
   }
 
-  public static @Nullable CurrencyLoader createInstance(@NonNull String parentDirectory) {
+  public static @Nullable CurrencyLoader createInstance(Nomisma parent, Path parentDirectory) {
     try {
-      Path currencyDir = Paths.get(parentDirectory, "Currencies");
+      Path currencyDir = parentDirectory.resolve("Currencies");
       Files.createDirectories(currencyDir);
-      return new CurrencyLoader(currencyDir);
+      return new CurrencyLoader(parent, currencyDir);
     } catch (IOException e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  public @NonNull CompletableFuture<Void> loadAllCurrencies() {
-    return Tasker.async(() -> {
+  public CompletableFuture<?> loadAllCurrencies() {
+    return parent.executor().async().submit(() -> {
       try (Stream<Path> stream = Files.walk(currencyDir, 1)) {
         Collection<Currency> currencies = stream.filter(this::isJson).map(this::loadCurrency)
           .filter(Objects::nonNull).toList();
@@ -82,11 +82,11 @@ public class CurrencyLoader {
     });
   }
 
-  private Currency loadCurrency(@NonNull Path path) {
+  private @Nullable Currency loadCurrency(Path path) {
     try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(path.toFile()), StandardCharsets.UTF_8))) {
       Currency currency = ValidatedCurrency.validatedCopy(gson.fromJson(reader, CurrencyData.class));
       if (currency == null) {
-        Nomisma.logger().warn("Invalid currency data: " + path);
+        parent.logger().warn("Invalid currency data: " + path);
       } else {
         return currency;
       }
@@ -96,12 +96,12 @@ public class CurrencyLoader {
     return null;
   }
 
-  private @NonNull CompletableFuture<@NonNull Boolean> saveCurrency(@NonNull String name, @NonNull Currency currency) {
-    return Tasker.async(() -> {
+  private CompletableFuture<Boolean> saveCurrency(String name, Currency currency) {
+    return parent.executor().async().submit(() -> {
       Path path = Paths.get(currencyDir.toString(), name + CURRENCY_SUFFIX);
       try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path.toFile()), StandardCharsets.UTF_8)) {
         gson.toJson(new CurrencyData(currency), writer);
-        Nomisma.logger().info(currency.identifier() + " has been stored successfully.");
+        parent.logger().info(currency.identifier() + " has been stored successfully.");
         return true;
       } catch (IOException ignore) {
       }
@@ -116,7 +116,7 @@ public class CurrencyLoader {
     return path.getFileName().toString().endsWith(CURRENCY_SUFFIX);
   }
 
-  public boolean currencyFileExists(@NonNull String name) {
+  public boolean currencyFileExists(String name) {
     Path file = Paths.get(currencyDir.toString(), name + CURRENCY_SUFFIX);
     return Files.exists(file);
   }

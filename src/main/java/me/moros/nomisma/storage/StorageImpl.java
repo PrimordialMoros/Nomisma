@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -19,10 +19,10 @@
 
 package me.moros.nomisma.storage;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -31,11 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.zaxxer.hikari.HikariDataSource;
 import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.Leaderboard.LeaderboardEntry;
@@ -43,10 +42,8 @@ import me.moros.nomisma.model.Leaderboard.LeaderboardResult;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.storage.sql.SqlQueries;
-import me.moros.nomisma.util.Tasker;
 import me.moros.storage.SqlStreamReader;
-import me.moros.storage.StorageType;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import me.moros.storage.StorageDataSource;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
@@ -54,49 +51,46 @@ import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.core.statement.Batch;
 import org.jdbi.v3.core.statement.StatementContext;
-import org.slf4j.Logger;
 
 public final class StorageImpl implements EconomyStorage {
-  private final HikariDataSource source;
-  private final StorageType type;
-  private final Logger logger;
+  private final Nomisma parent;
+  private final StorageDataSource dataSource;
   private final Jdbi DB;
 
-  StorageImpl(@NonNull StorageType type, @NonNull Logger logger, @NonNull HikariDataSource source) {
-    this.type = type;
-    this.logger = logger;
-    this.source = source;
-    DB = Jdbi.create(this.source);
-    if (type != StorageType.H2 && type != StorageType.POSTGRESQL) {
+  StorageImpl(Nomisma parent, StorageDataSource dataSource) {
+    this.parent = parent;
+    this.dataSource = dataSource;
+    DB = Jdbi.create(this.dataSource.source());
+    if (!nativeUuid()) {
       DB.registerArgument(new UUIDArgumentFactory());
     }
+  }
+
+  boolean init(Function<String, InputStream> resourceProvider) {
     if (!tableExists("nomisma_players")) {
-      init();
+      Collection<String> statements;
+      String path = Path.of("schema", dataSource.type().realName() + ".sql").toString();
+      try (InputStream stream = resourceProvider.apply(path)) {
+        statements = SqlStreamReader.parseQueries(stream);
+      } catch (Exception e) {
+        return false;
+      }
+      DB.useHandle(handle -> {
+        Batch batch = handle.createBatch();
+        statements.forEach(batch::add);
+        batch.execute();
+      });
     }
-  }
-
-  private void init() {
-    InputStream stream = Objects.requireNonNull(Nomisma.plugin().getResource(type.schemaPath()), "Null schema.");
-    Collection<String> statements = SqlStreamReader.parseQueries(stream);
-    DB.useHandle(handle -> {
-      Batch batch = handle.createBatch();
-      statements.forEach(batch::add);
-      batch.execute();
-    });
-  }
-
-  @Override
-  public @NonNull StorageType type() {
-    return type;
+    return true;
   }
 
   @Override
   public void close() {
-    source.close();
+    dataSource.source().close();
   }
 
   @Override
-  public @NonNull User createProfile(@NonNull UUID uuid, @NonNull String name) {
+  public User createProfile(UUID uuid, String name) {
     User profile = loadProfile(uuid);
     if (profile == null) {
       profile = DB.withHandle(handle -> {
@@ -120,7 +114,7 @@ public final class StorageImpl implements EconomyStorage {
   }
 
   @Override
-  public @Nullable User loadProfile(@NonNull UUID uuid) {
+  public @Nullable User loadProfile(UUID uuid) {
     try {
       User temp = DB.withHandle(handle ->
         handle.createQuery(SqlQueries.PLAYER_SELECT_BY_UUID.query())
@@ -130,13 +124,13 @@ public final class StorageImpl implements EconomyStorage {
         return temp;
       }
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      parent.logger().error(e.getMessage(), e);
     }
     return null;
   }
 
   @Override
-  public @Nullable User loadProfile(@NonNull String name) {
+  public @Nullable User loadProfile(String name) {
     try {
       User temp = DB.withHandle(handle ->
         handle.createQuery(SqlQueries.PLAYER_SELECT_BY_NAME.query())
@@ -146,31 +140,31 @@ public final class StorageImpl implements EconomyStorage {
         return temp;
       }
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      parent.logger().error(e.getMessage(), e);
     }
     return null;
   }
 
   @Override
-  public @NonNull Collection<@NonNull User> loadAllProfiles() {
+  public Collection<User> loadAllProfiles() {
     try {
       return DB.withHandle(handle ->
         handle.createQuery(SqlQueries.PLAYER_SELECT_ALL.query()).map(this::profileRowMapper).stream().toList()
       );
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      parent.logger().error(e.getMessage(), e);
     }
     return List.of();
   }
 
   @Override
-  public void saveProfileAsync(@NonNull User user) {
+  public void saveProfileAsync(User user) {
     Map<Currency, BigDecimal> snapshot = user.balanceSnapshot();
-    Tasker.async(() -> saveProfile(user, snapshot));
+    parent.executor().async().submit(() -> saveProfile(user, snapshot));
   }
 
   @Override
-  public boolean saveProfile(@NonNull User user, @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balance) {
+  public boolean saveProfile(User user, Map<Currency, BigDecimal> balance) {
     try {
       var map = balance.entrySet().stream()
         .collect(Collectors.toMap(e -> e.getKey().identifier(), Entry::getValue));
@@ -179,18 +173,18 @@ public final class StorageImpl implements EconomyStorage {
         .bind("player_uuid", user.uuid()).bindMap(map).execute());
       return true;
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      parent.logger().error(e.getMessage(), e);
     }
     return false;
   }
 
   @Override
-  public @NonNull LeaderboardResult topBalances(@NonNull Currency currency, int offset, int limit) {
+  public LeaderboardResult topBalances(Currency currency, int offset, int limit) {
     try {
       String query = SqlQueries.selectTop(currency, offset, limit);
       return new LeaderboardResult(DB.withHandle(handle -> handle.createQuery(query).map(this::leaderboardMapper).list()));
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      parent.logger().error(e.getMessage(), e);
     }
     return new LeaderboardResult(List.of());
   }
@@ -200,7 +194,7 @@ public final class StorageImpl implements EconomyStorage {
   }
 
   @Override
-  public boolean createColumn(@NonNull Currency currency) {
+  public boolean createColumn(Currency currency) {
     try {
       boolean exists = DB.withHandle(handle -> handle.queryMetadata(d -> d.getColumns(null, null, "%", null))
         .map(x -> x.getColumn("COLUMN_NAME", String.class)).stream().anyMatch(currency.identifier()::equalsIgnoreCase)
@@ -210,7 +204,7 @@ public final class StorageImpl implements EconomyStorage {
         return true;
       }
     } catch (Exception e) {
-      logger.warn(e.getMessage(), e);
+      parent.logger().warn(e.getMessage(), e);
     }
     return false;
   }
@@ -223,9 +217,16 @@ public final class StorageImpl implements EconomyStorage {
           .map(x -> x.getColumn("TABLE_NAME", String.class)).stream().anyMatch(table::equalsIgnoreCase);
       });
     } catch (Exception e) {
-      logger.warn(e.getMessage(), e);
+      parent.logger().warn(e.getMessage(), e);
     }
     return false;
+  }
+
+  private boolean nativeUuid() {
+    return switch (dataSource.type()) {
+      case POSTGRESQL, H2, HSQL -> true;
+      default -> false;
+    };
   }
 
   private static final class UUIDArgumentFactory extends AbstractArgumentFactory<UUID> {
@@ -238,8 +239,7 @@ public final class StorageImpl implements EconomyStorage {
       ByteBuffer buffer = ByteBuffer.wrap(new byte[16]);
       buffer.putLong(value.getMostSignificantBits());
       buffer.putLong(value.getLeastSignificantBits());
-      ByteArrayInputStream stream = new ByteArrayInputStream(buffer.array());
-      return (position, statement, ctx) -> statement.setBinaryStream(position, stream);
+      return (position, statement, ctx) -> statement.setBytes(position, buffer.array());
     }
   }
 }

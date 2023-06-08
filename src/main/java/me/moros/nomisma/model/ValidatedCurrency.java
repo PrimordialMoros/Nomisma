@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -24,7 +24,6 @@ import java.util.Set;
 
 import me.moros.nomisma.util.CurrencyUtil;
 import net.kyori.adventure.text.Component;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public non-sealed class ValidatedCurrency implements Currency {
@@ -63,32 +62,32 @@ public non-sealed class ValidatedCurrency implements Currency {
   }
 
   @Override
-  public @NonNull String identifier() {
+  public String identifier() {
     return identifier;
   }
 
   @Override
-  public @NonNull String format() {
+  public String format() {
     return format;
   }
 
   @Override
-  public @NonNull String singularPlain() {
+  public String singularPlain() {
     return singularPlain;
   }
 
   @Override
-  public @NonNull Component singular() {
+  public Component singular() {
     return singular;
   }
 
   @Override
-  public @NonNull String pluralPlain() {
+  public String pluralPlain() {
     return pluralPlain;
   }
 
   @Override
-  public @NonNull Component plural() {
+  public Component plural() {
     return plural;
   }
 
@@ -103,12 +102,12 @@ public non-sealed class ValidatedCurrency implements Currency {
   }
 
   @Override
-  public @NonNull String commandPrefix() {
+  public String commandPrefix() {
     return commandPrefix;
   }
 
   @Override
-  public @NonNull Collection<@NonNull String> commandAliases() {
+  public Collection<String> commandAliases() {
     return Set.copyOf(commandAliases);
   }
 

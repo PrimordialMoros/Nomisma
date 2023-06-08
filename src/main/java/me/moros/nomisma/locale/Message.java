@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -24,7 +24,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.command.ConsoleCommandSender;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.translatable;
@@ -84,14 +83,14 @@ public interface Message {
   Args2<String, String> VERSION_COMMAND_HOVER = (author, link) -> translatable("nomisma.command.version.hover", DARK_AQUA)
     .args(text(author, GREEN), text(link, GREEN));
 
-  static @NonNull Component brand(@NonNull ComponentLike message) {
+  static Component brand(ComponentLike message) {
     return text().append(PREFIX).append(message).build();
   }
 
   interface Args0 {
-    @NonNull Component build();
+    Component build();
 
-    default void send(@NonNull Audience audience) {
+    default void send(Audience audience) {
       if (audience instanceof ConsoleCommandSender) {
         audience.sendMessage(GlobalTranslator.render(build(), TranslationManager.DEFAULT_LOCALE));
         return;
@@ -101,9 +100,9 @@ public interface Message {
   }
 
   interface Args1<A0> {
-    @NonNull Component build(@NonNull A0 arg0);
+    Component build(A0 arg0);
 
-    default void send(@NonNull Audience audience, @NonNull A0 arg0) {
+    default void send(Audience audience, A0 arg0) {
       if (audience instanceof ConsoleCommandSender) {
         audience.sendMessage(GlobalTranslator.render(build(arg0), TranslationManager.DEFAULT_LOCALE));
         return;
@@ -113,9 +112,9 @@ public interface Message {
   }
 
   interface Args2<A0, A1> {
-    @NonNull Component build(@NonNull A0 arg0, @NonNull A1 arg1);
+    Component build(A0 arg0, A1 arg1);
 
-    default void send(@NonNull Audience audience, @NonNull A0 arg0, @NonNull A1 arg1) {
+    default void send(Audience audience, A0 arg0, A1 arg1) {
       if (audience instanceof ConsoleCommandSender) {
         audience.sendMessage(GlobalTranslator.render(build(arg0, arg1), TranslationManager.DEFAULT_LOCALE));
         return;

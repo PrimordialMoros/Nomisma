@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -21,7 +21,6 @@ package me.moros.nomisma.command;
 
 import cloud.commandframework.permission.CommandPermission;
 import cloud.commandframework.permission.Permission;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class CommandPermissions {
   private CommandPermissions() {
@@ -34,7 +33,7 @@ public final class CommandPermissions {
   public static final CommandPermission MIGRATE = create("migrate");
   public static final CommandPermission IMPORT = create("import");
 
-  private static Permission create(@NonNull String node) {
+  private static Permission create(String node) {
     return Permission.of("nomisma.command." + node);
   }
 }

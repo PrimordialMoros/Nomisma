@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -22,20 +22,18 @@ package me.moros.nomisma.model;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-
 public interface BalanceHolder {
-  @NonNull BigDecimal balance(@NonNull Currency currency);
+  BigDecimal balance(Currency currency);
 
-  @NonNull BigDecimal set(@NonNull Currency currency, @NonNull BigDecimal amount);
+  BigDecimal set(Currency currency, BigDecimal amount);
 
-  @NonNull BigDecimal add(@NonNull Currency currency, @NonNull BigDecimal amount);
+  BigDecimal add(Currency currency, BigDecimal amount);
 
-  @NonNull BigDecimal subtract(@NonNull Currency currency, @NonNull BigDecimal amount);
+  BigDecimal subtract(Currency currency, BigDecimal amount);
 
-  @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balanceSnapshot();
+  Map<Currency, BigDecimal> balanceSnapshot();
 
-  default boolean has(@NonNull Currency currency, @NonNull BigDecimal amount) {
+  default boolean has(Currency currency, BigDecimal amount) {
     return balance(currency).compareTo(amount) >= 0;
   }
 }

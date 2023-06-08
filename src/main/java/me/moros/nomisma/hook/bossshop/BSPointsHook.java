@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -27,12 +27,11 @@ import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
 import org.black_ixx.bossshop.pointsystem.BSPointsPlugin;
 import org.bukkit.OfflinePlayer;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class BSPointsHook extends BSPointsPlugin {
   private final Currency currency;
 
-  public BSPointsHook(@NonNull Currency currency) {
+  public BSPointsHook(Currency currency) {
     super("nomisma:" + currency.identifier());
     this.currency = currency;
     register();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -30,11 +30,10 @@ import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
 import org.bukkit.command.CommandSender;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class CurrencyParser implements ArgumentParser<CommandSender, Currency> {
   @Override
-  public @NonNull ArgumentParseResult<Currency> parse(@NonNull CommandContext<CommandSender> commandContext, @NonNull Queue<@NonNull String> inputQueue) {
+  public ArgumentParseResult<Currency> parse(CommandContext<CommandSender> commandContext, Queue<String> inputQueue) {
     String input = CurrencyUtil.sanitizeInput(inputQueue.peek());
     if (input == null) {
       return ArgumentParseResult.failure(new NoInputProvidedException(CurrencyParser.class, commandContext));
@@ -52,7 +51,7 @@ public class CurrencyParser implements ArgumentParser<CommandSender, Currency> {
   }
 
   @Override
-  public @NonNull List<@NonNull String> suggestions(@NonNull CommandContext<CommandSender> commandContext, @NonNull String input) {
+  public List<String> suggestions(CommandContext<CommandSender> commandContext, String input) {
     return Registries.CURRENCIES.stream().map(Currency::identifier).toList();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -40,11 +40,9 @@ import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.storage.EconomyStorage;
-import me.moros.nomisma.util.Tasker;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -54,6 +52,7 @@ public final class UserRegistry implements Registry<User> {
   private final Map<UUID, User> onlineUsers;
   private final Map<User, Map<Currency, BigDecimal>> pending;
 
+  private Nomisma parent;
   private EconomyStorage storage;
   private AsyncLoadingCache<UUID, User> cache;
 
@@ -62,14 +61,14 @@ public final class UserRegistry implements Registry<User> {
     pending = new ConcurrentHashMap<>();
   }
 
-  public void init(@NonNull EconomyStorage storage) {
+  public void init(Nomisma plugin, EconomyStorage storage) {
     if (cache == null) {
-      Objects.requireNonNull(storage);
-      this.storage = storage;
+      this.parent = Objects.requireNonNull(plugin);
+      this.storage = Objects.requireNonNull(storage);
       cache = Caffeine.newBuilder().maximumSize(100).expireAfterAccess(Duration.ofMinutes(20))
         .buildAsync(this.storage::loadProfile);
-      long minutes = Nomisma.configManager().config().node("save-interval-minutes").getLong(10);
-      Tasker.repeatAsync(this::processTasks, 1200 * Math.max(1, minutes));
+      long ticks = 1200 * Math.max(1, plugin.configManager().config().saveIntervalMinutes());
+      plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, this::processTasks, 1, ticks);
     }
   }
 
@@ -82,7 +81,7 @@ public final class UserRegistry implements Registry<User> {
     copy.forEach(storage::saveProfile);
   }
 
-  public @Nullable User userSync(@NonNull String name) {
+  public @Nullable User userSync(String name) {
     OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
     if (player != null) {
       return userSync(player.getUniqueId());
@@ -98,21 +97,21 @@ public final class UserRegistry implements Registry<User> {
     return null;
   }
 
-  public @Nullable User userSync(@NonNull UUID uuid) {
+  public @Nullable User userSync(UUID uuid) {
     return cache == null ? null : cache.synchronous().get(uuid);
   }
 
-  public @NonNull User userWithoutCache(@NonNull UUID uuid, @NonNull String name) {
+  public User userWithoutCache(UUID uuid, String name) {
     return storage.createProfile(uuid, name);
   }
 
-  public @NonNull CompletableFuture<@Nullable User> user(@NonNull String name) {
+  public CompletableFuture<@Nullable User> user(String name) {
     OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
     if (player != null) {
       return user(player.getUniqueId());
     } else {
       if (cache != null) {
-        return Tasker.async(() -> storage.loadProfile(name)).thenApply(user -> {
+        return parent.executor().async().submit(() -> storage.loadProfile(name)).thenApply(user -> {
           if (user != null) {
             cache.synchronous().put(user.uuid(), user);
             return user;
@@ -124,27 +123,27 @@ public final class UserRegistry implements Registry<User> {
     return CompletableFuture.completedFuture(null);
   }
 
-  public @NonNull CompletableFuture<@Nullable User> user(@NonNull UUID uuid) {
+  public CompletableFuture<@Nullable User> user(UUID uuid) {
     return cache == null ? CompletableFuture.completedFuture(null) : cache.get(uuid);
   }
 
-  public @NonNull User forceLoad(@NonNull UUID uuid, @NonNull String name) {
+  public User forceLoad(UUID uuid, String name) {
     onlineUsers.remove(uuid);
     cache.synchronous().invalidate(uuid);
     return cache.synchronous().get(uuid, id -> storage.createProfile(uuid, name));
   }
 
-  public @NonNull User forceLoad(@NonNull UUID uuid, @NonNull String name, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
+  public User forceLoad(UUID uuid, String name, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
     onlineUsers.remove(uuid);
     cache.synchronous().invalidate(uuid);
     return cache.get(uuid, id -> storage.createProfile(uuid, name)).get(timeout, TimeUnit.MILLISECONDS);
   }
 
-  public @NonNull User onlineUser(@NonNull Player player) {
+  public User onlineUser(Player player) {
     return Objects.requireNonNull(onlineUsers.get(player.getUniqueId()));
   }
 
-  public void invalidate(@NonNull UUID uuid) {
+  public void invalidate(UUID uuid) {
     User user = onlineUsers.remove(uuid);
     if (user != null && cache != null) {
       cache.synchronous().invalidate(uuid);
@@ -157,20 +156,20 @@ public final class UserRegistry implements Registry<User> {
     processTasks();
   }
 
-  public void register(@NonNull User user) {
+  public void register(User user) {
     onlineUsers.putIfAbsent(user.uuid(), user);
   }
 
-  public @NonNull Stream<User> stream() {
+  public Stream<User> stream() {
     return onlineUsers.values().stream();
   }
 
   @Override
-  public @NonNull Iterator<User> iterator() {
+  public Iterator<User> iterator() {
     return Collections.unmodifiableCollection(onlineUsers.values()).iterator();
   }
 
-  public void addPending(@NonNull User user) {
+  public void addPending(User user) {
     pending.put(user, user.balanceSnapshot());
   }
 }

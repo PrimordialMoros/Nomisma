@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -28,7 +28,6 @@ import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.arguments.standard.StringArgument.StringMode;
 import cloud.commandframework.meta.CommandMeta;
-import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.command.argument.BigDecimalArgument;
 import me.moros.nomisma.locale.Message;
 import me.moros.nomisma.model.BalanceHolder;
@@ -42,21 +41,21 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class DynamicCurrencyCommand {
   private final CommandManager manager;
   private final Currency currency;
   private Builder<CommandSender> nonPrimaryBuilder;
 
-  DynamicCurrencyCommand(@NonNull CommandManager manager, @NonNull Currency currency) {
+  DynamicCurrencyCommand(CommandManager manager, Currency currency) {
     this.manager = manager;
     this.currency = currency;
     construct();
   }
 
   private void construct() {
-    var pageArg = IntegerArgument.<CommandSender>newBuilder("page").withMin(1)
+    var pageArg = IntegerArgument.<CommandSender>builder("page").withMin(1)
       .asOptionalWithDefault(1);
     var userArg = manager.argumentBuilder(User.class, "target")
       .asOptionalWithDefault("me");
@@ -130,7 +129,7 @@ public final class DynamicCurrencyCommand {
       Message.BALANCETOP_MAX_PAGE.send(commandSender, Leaderboard.MAX_PAGE);
       return;
     }
-    Nomisma.leaderboard().getTop(currency).thenAccept(result -> {
+    manager.getOwningPlugin().leaderboard().getTop(currency).thenAccept(result -> {
       int offset = (page - 1) * Leaderboard.ENTRIES_PER_PAGE;
       List<LeaderboardEntry> filteredEntries = result.stream().skip(offset).limit(Leaderboard.ENTRIES_PER_PAGE).toList();
       if (filteredEntries.isEmpty()) {
@@ -151,7 +150,7 @@ public final class DynamicCurrencyCommand {
     });
   }
 
-  private void onHelp(CommandSender sender, String query) {
+  private void onHelp(CommandSender sender, @Nullable String query) {
     String specificQuery = currency.commandPrefix();
     if (query != null && !query.isEmpty()) {
       specificQuery += " " + query;

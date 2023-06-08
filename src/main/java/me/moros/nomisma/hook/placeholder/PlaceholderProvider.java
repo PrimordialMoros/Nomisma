@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -26,7 +26,6 @@ import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class PlaceholderProvider {
@@ -45,7 +44,7 @@ public final class PlaceholderProvider {
     return builder.build();
   }
 
-  public @Nullable String onPlaceholderRequest(@NonNull User player, @NonNull String placeholder) {
+  public @Nullable String onPlaceholderRequest(User player, String placeholder) {
     for (var entry : placeholders.entrySet()) {
       String id = entry.getKey();
       Placeholder p = entry.getValue();
@@ -83,11 +82,11 @@ public final class PlaceholderProvider {
 
   @FunctionalInterface
   private interface StaticPlaceholder extends Placeholder {
-    @NonNull String handle(User player);
+    String handle(User player);
   }
 
   @FunctionalInterface
   private interface DynamicPlaceholder extends Placeholder {
-    @NonNull String handle(User player, String argument);
+    String handle(User player, String argument);
   }
 }

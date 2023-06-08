@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import me.moros.nomisma.model.Currency;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class CurrencyRegistry implements Registry<Currency> {
@@ -39,7 +38,7 @@ public class CurrencyRegistry implements Registry<Currency> {
     currencies = new ConcurrentHashMap<>();
   }
 
-  public int registerAndLock(@NonNull Iterable<@NonNull Currency> currencies) {
+  public int registerAndLock(Iterable<Currency> currencies) {
     if (locked) {
       return 0;
     }
@@ -54,7 +53,7 @@ public class CurrencyRegistry implements Registry<Currency> {
     return counter;
   }
 
-  private boolean register(@NonNull Currency currency) {
+  private boolean register(Currency currency) {
     if (!contains(currency)) {
       currencies.put(currency.identifier(), currency);
       return true;
@@ -62,7 +61,7 @@ public class CurrencyRegistry implements Registry<Currency> {
     return false;
   }
 
-  public boolean contains(@NonNull Currency currency) {
+  public boolean contains(Currency currency) {
     return currencies.containsKey(currency.identifier());
   }
 
@@ -78,12 +77,12 @@ public class CurrencyRegistry implements Registry<Currency> {
     return currencies.size();
   }
 
-  public @NonNull Stream<Currency> stream() {
+  public Stream<Currency> stream() {
     return currencies.values().stream();
   }
 
   @Override
-  public @NonNull Iterator<Currency> iterator() {
+  public Iterator<Currency> iterator() {
     return Collections.unmodifiableCollection(currencies.values()).iterator();
   }
 }

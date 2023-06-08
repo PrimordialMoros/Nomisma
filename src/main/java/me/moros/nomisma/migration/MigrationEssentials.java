@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -29,30 +29,30 @@ import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
-import me.moros.nomisma.util.Tasker;
 import org.bukkit.Bukkit;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class MigrationEssentials implements MigrationUtility {
+  private final Nomisma parent;
   private final Essentials plugin;
 
-  MigrationEssentials(MigrationType type) {
+  MigrationEssentials(Nomisma parent, MigrationType type) {
+    this.parent = parent;
     this.plugin = (Essentials) Objects.requireNonNull(Bukkit.getPluginManager().getPlugin(type.plugin()));
   }
 
   @Override
-  public @NonNull CompletableFuture<@NonNull Boolean> apply(@NonNull Currency currency) {
-    return Tasker.async(() -> migrate(currency));
+  public CompletableFuture<Boolean> apply(Currency currency) {
+    return parent.executor().async().submit(() -> migrate(currency));
   }
 
   private boolean migrate(Currency currency) {
     if (plugin.getSettings().isEcoDisabled()) {
       return false;
     }
-    Collection<UUID> essUsers = plugin.getUserMap().getAllUniqueUsers();
+    Collection<UUID> essUsers = plugin.getUsers().getAllUserUUIDs();
     int count = 0;
     for (UUID uuid : essUsers) {
-      com.earth2me.essentials.User essUser = plugin.getUserMap().getUser(uuid);
+      com.earth2me.essentials.User essUser = plugin.getUsers().getUser(uuid);
       if (essUser == null) {
         continue;
       }
@@ -66,7 +66,7 @@ public class MigrationEssentials implements MigrationUtility {
     }
     int delta = essUsers.size() - count;
     if (delta > 0) {
-      Nomisma.logger().warn(delta + " Essentials account balances were NOT migrated due to missing data.");
+      parent.logger().warn(delta + " Essentials account balances were NOT migrated due to missing data.");
     }
     return count > 0;
   }

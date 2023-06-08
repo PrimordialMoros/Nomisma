@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -32,7 +32,6 @@ import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 import org.bukkit.OfflinePlayer;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import static me.moros.nomisma.util.CurrencyUtil.doubleValue;
 
@@ -40,7 +39,7 @@ public class VaultLayer implements Economy {
   private final Nomisma plugin;
   private final Currency primary;
 
-  public VaultLayer(@NonNull Nomisma plugin, @NonNull Currency primary) {
+  public VaultLayer(Nomisma plugin, Currency primary) {
     this.plugin = plugin;
     this.primary = primary;
   }

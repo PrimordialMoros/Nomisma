@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -22,7 +22,6 @@ package me.moros.nomisma.storage.sql;
 import java.util.Collection;
 
 import me.moros.nomisma.model.Currency;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public enum SqlQueries {
   PLAYER_INSERT("INSERT INTO nomisma_players (player_uuid, player_name) VALUES(?, ?)"),
@@ -39,11 +38,11 @@ public enum SqlQueries {
   /**
    * @return The SQL query for this enumeration.
    */
-  public @NonNull String query() {
+  public String query() {
     return query;
   }
 
-  public static @NonNull String selectTop(@NonNull Currency currency, int offset, int limit) {
+  public static String selectTop(Currency currency, int offset, int limit) {
     StringBuilder sb = new StringBuilder("SELECT player_name, ");
     sb.append(currency.identifier()).append(" AS balance FROM nomisma_players ORDER BY balance DESC LIMIT ");
     if (offset > 0) {
@@ -53,7 +52,7 @@ public enum SqlQueries {
     return sb.toString();
   }
 
-  public static @NonNull String updateProfile(@NonNull Collection<@NonNull String> currencies) {
+  public static String updateProfile(Collection<String> currencies) {
     StringBuilder sb = new StringBuilder("UPDATE nomisma_players SET player_name = :player_name");
     for (String id : currencies) {
       sb.append(", ").append(id).append(" = :").append(id);
@@ -62,7 +61,7 @@ public enum SqlQueries {
     return sb.toString();
   }
 
-  public static @NonNull String addColumn(@NonNull Currency currency) {
+  public static String addColumn(Currency currency) {
     return "ALTER TABLE nomisma_players ADD " + currency.identifier() + " DECIMAL(12,2) NOT NULL DEFAULT 0";
   }
 }

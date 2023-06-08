@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -29,14 +29,13 @@ import cloud.commandframework.context.CommandContext;
 import cloud.commandframework.exceptions.parsing.NoInputProvidedException;
 import me.moros.nomisma.util.CurrencyUtil;
 import org.bukkit.command.CommandSender;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class BigDecimalArgument extends CommandArgument<CommandSender, BigDecimal> {
   private BigDecimalArgument(String name, boolean integerOnly) {
     super(true, name, new BigDecimalParser(integerOnly), BigDecimal.class);
   }
 
-  public static @NonNull CommandArgument<CommandSender, BigDecimal> of(@NonNull String name, boolean decimal) {
+  public static CommandArgument<CommandSender, BigDecimal> of(String name, boolean decimal) {
     return new BigDecimalArgument(name, !decimal);
   }
 
@@ -48,7 +47,7 @@ public final class BigDecimalArgument extends CommandArgument<CommandSender, Big
     }
 
     @Override
-    public @NonNull ArgumentParseResult<BigDecimal> parse(@NonNull CommandContext<CommandSender> commandContext, @NonNull Queue<@NonNull String> inputQueue) {
+    public ArgumentParseResult<BigDecimal> parse(CommandContext<CommandSender> commandContext, Queue<String> inputQueue) {
       final String input = inputQueue.peek();
       if (input == null) {
         return ArgumentParseResult.failure(new NoInputProvidedException(BigDecimalParser.class, commandContext));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -25,17 +25,20 @@ import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class NomismaExpansion extends PlaceholderExpansion {
+  private final Nomisma plugin;
   private final PlaceholderProvider provider;
 
-  public NomismaExpansion() {
+  public NomismaExpansion(Nomisma plugin) {
+    this.plugin = plugin;
     this.provider = new PlaceholderProvider();
   }
 
   @Override
   public @NonNull String getAuthor() {
-    return Nomisma.author();
+    return plugin.author();
   }
 
   @Override
@@ -45,7 +48,7 @@ public class NomismaExpansion extends PlaceholderExpansion {
 
   @Override
   public @NonNull String getVersion() {
-    return Nomisma.version();
+    return plugin.version();
   }
 
   @Override
@@ -54,7 +57,7 @@ public class NomismaExpansion extends PlaceholderExpansion {
   }
 
   @Override
-  public String onPlaceholderRequest(Player player, @NonNull String params) {
+  public String onPlaceholderRequest(@Nullable Player player, String params) {
     if (player == null) {
       return "";
     }

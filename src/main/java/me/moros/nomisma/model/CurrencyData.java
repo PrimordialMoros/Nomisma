@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -22,7 +22,6 @@ package me.moros.nomisma.model;
 import java.util.Collection;
 
 import me.moros.nomisma.util.CurrencyUtil;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public final class CurrencyData {
   private final String id;
@@ -34,7 +33,7 @@ public final class CurrencyData {
   private final String cmdPrefix;
   private final Collection<String> cmdAliases;
 
-  public CurrencyData(@NonNull Currency currency) {
+  public CurrencyData(Currency currency) {
     id = currency.identifier();
     formatRaw = currency.format();
     singularRaw = CurrencyUtil.MINI_SERIALIZER.serialize(currency.singular());
@@ -45,19 +44,19 @@ public final class CurrencyData {
     cmdAliases = currency.commandAliases();
   }
 
-  public @NonNull String id() {
+  public String id() {
     return id;
   }
 
-  public @NonNull String formatRaw() {
+  public String formatRaw() {
     return formatRaw;
   }
 
-  public @NonNull String singularRaw() {
+  public String singularRaw() {
     return singularRaw;
   }
 
-  public @NonNull String pluralRaw() {
+  public String pluralRaw() {
     return pluralRaw;
   }
 
@@ -69,11 +68,11 @@ public final class CurrencyData {
     return primary;
   }
 
-  public @NonNull String cmdPrefix() {
+  public String cmdPrefix() {
     return cmdPrefix;
   }
 
-  public @NonNull Collection<@NonNull String> cmdAliases() {
+  public Collection<String> cmdAliases() {
     return cmdAliases;
   }
 }

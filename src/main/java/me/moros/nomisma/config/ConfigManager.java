@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -22,47 +22,72 @@ package me.moros.nomisma.config;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-import me.moros.nomisma.Nomisma;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.slf4j.Logger;
 import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.NodePath;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
+import org.spongepowered.configurate.reactive.Subscriber;
+import org.spongepowered.configurate.reference.ConfigurationReference;
+import org.spongepowered.configurate.reference.ValueReference;
+import org.spongepowered.configurate.reference.WatchServiceListener;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 public final class ConfigManager {
-  private final HoconConfigurationLoader loader;
+  private final Config defaultConfig;
 
-  private CommentedConfigurationNode configRoot;
+  private final Logger logger;
+  private final WatchServiceListener listener;
+  private final ConfigurationReference<CommentedConfigurationNode> reference;
+  private final ValueReference<Config, CommentedConfigurationNode> configReference;
 
-  public ConfigManager(@NonNull String directory) {
-    Path path = Paths.get(directory, "nomisma.conf");
-    loader = HoconConfigurationLoader.builder().path(path).build();
+  public ConfigManager(Logger logger, Path directory) {
+    this.logger = logger;
+    this.defaultConfig = new Config();
+    Path path = directory.resolve("nomisma.conf");
     try {
       Files.createDirectories(path.getParent());
-      configRoot = loader.load();
+      listener = WatchServiceListener.create();
+      reference = listener.listenToConfiguration(f -> HoconConfigurationLoader.builder().path(f).build(), path);
+      configReference = reference.referenceTo(Config.class, NodePath.path(), defaultConfig);
     } catch (IOException e) {
-      Nomisma.logger().warn(e.getMessage(), e);
+      throw new RuntimeException(e);
     }
   }
 
-  public void reload() {
-    try {
-      configRoot = loader.load();
-    } catch (IOException e) {
-      Nomisma.logger().warn(e.getMessage(), e);
-    }
+  public void subscribe(Subscriber<? super CommentedConfigurationNode> subscriber) {
+    reference.updates().subscribe(subscriber);
   }
 
   public void save() {
     try {
-      Nomisma.logger().info("Saving nomisma config");
-      loader.save(configRoot);
+      reference.save();
     } catch (IOException e) {
-      Nomisma.logger().warn(e.getMessage(), e);
+      logger.warn(e.getMessage(), e);
     }
   }
 
-  public @NonNull CommentedConfigurationNode config() {
-    return configRoot;
+  public void close() {
+    try {
+      reference.close();
+      listener.close();
+    } catch (IOException e) {
+      logger.warn(e.getMessage(), e);
+    }
+  }
+
+  public Config config() {
+    Config config = configReference.get();
+    return config == null ? defaultConfig : config;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> T config(Iterable<String> path, T def) {
+    try {
+      return (T) reference.get(path).get(def.getClass(), def);
+    } catch (SerializationException e) {
+      logger.warn(e.getMessage(), e);
+    }
+    return def;
   }
 }

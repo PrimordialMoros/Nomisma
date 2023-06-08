@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -45,7 +45,6 @@ import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.util.CurrencyUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import static net.kyori.adventure.text.Component.text;
@@ -53,15 +52,17 @@ import static net.kyori.adventure.text.Component.text;
 public final class CommandManager extends PaperCommandManager<CommandSender> {
   private static Pattern INVALID_NAMES;
 
+  private final Nomisma plugin;
   private final MinecraftHelp<CommandSender> help;
   private final CommandConfirmationManager<CommandSender> confirmationManager;
 
-  public CommandManager(@NonNull Nomisma plugin) throws Exception {
-    super(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>newBuilder().withSynchronousParsing().build(), Function.identity(), Function.identity());
-    String prefix = Nomisma.configManager().config().node("geyser-username-prefix").getString(".");
+  public CommandManager(Nomisma plugin) throws Exception {
+    super(plugin, AsynchronousCommandExecutionCoordinator.<CommandSender>builder().withSynchronousParsing().build(), Function.identity(), Function.identity());
+    this.plugin = plugin;
+    String prefix = plugin.configManager().config().geyserUsernamePrefix();
     INVALID_NAMES = Pattern.compile("[^" + prefix + "_A-Za-z0-9]");
     registerParsers();
-    registerExceptionHandler();
+    registerExceptionHandler(plugin);
     registerAsynchronousCompletions();
     commandSuggestionProcessor(this::suggestionProvider);
 
@@ -77,7 +78,7 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
     }
   }
 
-  public @NonNull MinecraftHelp<CommandSender> help() {
+  public MinecraftHelp<CommandSender> help() {
     return help;
   }
 
@@ -97,9 +98,8 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
     parserRegistry().registerParserSupplier(TypeToken.get(Currency.class), options -> new CurrencyParser());
   }
 
-  private void registerExceptionHandler() {
-    String prefix = Nomisma.configManager().config().node("brand")
-      .getString(CurrencyUtil.MINI_SERIALIZER.serialize(Message.PREFIX));
+  private void registerExceptionHandler(Nomisma plugin) {
+    String prefix = plugin.configManager().config().brand();
     Component prefixComponent = CurrencyUtil.MINI_SERIALIZER.deserializeOr(prefix, Message.PREFIX);
     new MinecraftExceptionHandler<CommandSender>()
       .withInvalidSyntaxHandler()
@@ -137,5 +137,10 @@ public final class CommandManager extends PaperCommandManager<CommandSender> {
       }
     }
     return suggestions;
+  }
+
+  @Override
+  public Nomisma getOwningPlugin() {
+    return plugin;
   }
 }

@@ -17,7 +17,13 @@
  * along with Nomisma. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package me.moros.nomisma.registry;
+/**
+ * Base package for Nomisma.
+ */
+@DefaultQualifier(value = NonNull.class, locations = TypeUseLocation.PARAMETER)
+@DefaultQualifier(value = NonNull.class, locations = TypeUseLocation.RETURN)
+package me.moros.nomisma;
 
-public interface Registry<V> extends Iterable<V> {
-}
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
+import org.checkerframework.framework.qual.TypeUseLocation;

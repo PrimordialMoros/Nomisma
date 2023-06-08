@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -19,6 +19,7 @@
 
 package me.moros.nomisma;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 import me.moros.nomisma.command.CommandManager;
@@ -34,12 +35,12 @@ import me.moros.nomisma.registry.Registries;
 import me.moros.nomisma.storage.CurrencyLoader;
 import me.moros.nomisma.storage.EconomyStorage;
 import me.moros.nomisma.storage.StorageFactory;
-import me.moros.nomisma.util.Tasker;
+import me.moros.tasker.bukkit.BukkitExecutor;
+import me.moros.tasker.executor.CompositeExecutor;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,18 +61,19 @@ public class Nomisma extends JavaPlugin {
   private VaultLayer vaultLayer;
   private Leaderboard leaderboard;
 
+  private CompositeExecutor executor;
+
   @Override
   public void onEnable() {
     plugin = this;
     author = getDescription().getAuthors().get(0);
     version = getDescription().getVersion();
     logger = LoggerFactory.getLogger(getClass().getSimpleName());
-
-    String dir = plugin.getDataFolder().toString();
-    configManager = new ConfigManager(dir);
-    translationManager = new TranslationManager(dir);
-
-    loader = CurrencyLoader.createInstance(dir);
+    executor = CompositeExecutor.of(new BukkitExecutor(this));
+    Path dir = plugin.getDataFolder().toPath();
+    configManager = new ConfigManager(logger, dir);
+    translationManager = new TranslationManager(logger, dir);
+    loader = CurrencyLoader.createInstance(this, dir);
     if (loader == null) {
       logger.error("Could not create Currencies folder! Aborting plugin load.");
       setEnabled(false);
@@ -83,13 +85,12 @@ public class Nomisma extends JavaPlugin {
       int size = Registries.CURRENCIES.size();
       logger.info("Successfully loaded " + size + (size == 1 ? " currency" : " currencies") + " (" + delta + "ms)");
     });
-    storage = Objects.requireNonNull(StorageFactory.createInstance(), "Unable to connect to database!");
+    storage = Objects.requireNonNull(StorageFactory.createInstance(this), "Unable to connect to database!");
     Registries.CURRENCIES.forEach(storage::createColumn);
 
-    Registries.USERS.init(storage);
-    leaderboard = new Leaderboard(storage);
+    Registries.USERS.init(this, storage);
+    leaderboard = new Leaderboard(this, storage);
     handleHooks();
-
     try {
       new CommandManager(this);
     } catch (Exception e) {
@@ -97,7 +98,7 @@ public class Nomisma extends JavaPlugin {
       setEnabled(false);
       return;
     }
-    getServer().getPluginManager().registerEvents(new PlayerListener(), this);
+    getServer().getPluginManager().registerEvents(new PlayerListener(logger), this);
     configManager.save();
   }
 
@@ -107,14 +108,15 @@ public class Nomisma extends JavaPlugin {
       Bukkit.getServicesManager().unregister(Economy.class, vaultLayer);
     }
     Registries.USERS.saveAll();
-    Tasker.INSTANCE.shutdown();
+    configManager.close();
+    executor.shutdown();
     storage.close();
     getServer().getScheduler().cancelTasks(this);
   }
 
   private void handleHooks() {
     if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-      new NomismaExpansion().register();
+      new NomismaExpansion(this).register();
     }
     Currency primary = Registries.CURRENCIES.primary();
     if (primary == null) {
@@ -130,35 +132,43 @@ public class Nomisma extends JavaPlugin {
     }
   }
 
-  public static @MonotonicNonNull Nomisma plugin() {
+  public Nomisma plugin() {
     return plugin;
   }
 
-  public static @MonotonicNonNull String author() {
+  public Path path() {
+    return getDataFolder().toPath();
+  }
+
+  public String author() {
     return plugin.author;
   }
 
-  public static @MonotonicNonNull String version() {
+  public String version() {
     return plugin.version;
   }
 
-  public static @MonotonicNonNull Logger logger() {
+  public Logger logger() {
     return plugin.logger;
   }
 
-  public static @MonotonicNonNull ConfigManager configManager() {
+  public ConfigManager configManager() {
     return plugin.configManager;
   }
 
-  public static @MonotonicNonNull TranslationManager translationManager() {
+  public TranslationManager translationManager() {
     return plugin.translationManager;
   }
 
-  public static @MonotonicNonNull CurrencyLoader currencyLoader() {
+  public CurrencyLoader currencyLoader() {
     return plugin.loader;
   }
 
-  public static @MonotonicNonNull Leaderboard leaderboard() {
+  public Leaderboard leaderboard() {
     return plugin.leaderboard;
+  }
+
+  public CompositeExecutor executor() {
+    return executor;
   }
 }

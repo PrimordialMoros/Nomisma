@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -29,22 +29,22 @@ import me.moros.nomisma.Nomisma;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.User;
 import me.moros.nomisma.registry.Registries;
-import me.moros.nomisma.util.Tasker;
 import me.xanium.gemseconomy.GemsEconomy;
 import me.xanium.gemseconomy.account.Account;
 import org.bukkit.Bukkit;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class MigrationsGemsEconomy implements MigrationUtility {
+  private final Nomisma parent;
   private final GemsEconomy plugin;
 
-  MigrationsGemsEconomy(MigrationType type) {
+  MigrationsGemsEconomy(Nomisma parent, MigrationType type) {
+    this.parent = parent;
     this.plugin = (GemsEconomy) Objects.requireNonNull(Bukkit.getPluginManager().getPlugin(type.plugin()));
   }
 
   @Override
-  public @NonNull CompletableFuture<@NonNull Boolean> apply(@NonNull Currency currency) {
-    return Tasker.async(() -> migrate(currency));
+  public CompletableFuture<Boolean> apply(Currency currency) {
+    return parent.executor().async().submit(() -> migrate(currency));
   }
 
   private boolean migrate(Currency currency) {
@@ -66,7 +66,7 @@ public class MigrationsGemsEconomy implements MigrationUtility {
     }
     int delta = gemAccounts.size() - count;
     if (delta > 0) {
-      Nomisma.logger().warn(delta + " GemsEconomy account balances were NOT migrated due to missing data.");
+      parent.logger().warn(delta + " GemsEconomy account balances were NOT migrated due to missing data.");
     }
     return count > 0;
   }

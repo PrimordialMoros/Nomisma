@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Moros
+ * Copyright 2022-2023 Moros
  *
  * This file is part of Nomisma.
  *
@@ -27,24 +27,24 @@ import java.util.UUID;
 import me.moros.nomisma.model.Currency;
 import me.moros.nomisma.model.Leaderboard.LeaderboardResult;
 import me.moros.nomisma.model.User;
-import me.moros.storage.Storage;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface EconomyStorage extends Storage {
-  @NonNull User createProfile(@NonNull UUID uuid, @NonNull String name);
+public interface EconomyStorage {
+  void close();
 
-  @Nullable User loadProfile(@NonNull UUID uuid);
+  User createProfile(UUID uuid, String name);
 
-  @Nullable User loadProfile(@NonNull String name);
+  @Nullable User loadProfile(UUID uuid);
 
-  @NonNull Collection<@NonNull User> loadAllProfiles();
+  @Nullable User loadProfile(String name);
 
-  void saveProfileAsync(@NonNull User user);
+  Collection<User> loadAllProfiles();
 
-  boolean saveProfile(@NonNull User user, @NonNull Map<@NonNull Currency, @NonNull BigDecimal> balance);
+  void saveProfileAsync(User user);
 
-  @NonNull LeaderboardResult topBalances(@NonNull Currency currency, int offset, int limit);
+  boolean saveProfile(User user, Map<Currency, BigDecimal> balance);
 
-  boolean createColumn(@NonNull Currency currency);
+  LeaderboardResult topBalances(Currency currency, int offset, int limit);
+
+  boolean createColumn(Currency currency);
 }
